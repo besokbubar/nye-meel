@@ -4,7 +4,7 @@ import { X, Delete, Edit2 } from "lucide-react";
 export default function PaymentModal({ total, onClose, onSuccess }) {
   const [payAmount, setPayAmount] = useState("100000");
   const discount = 3500;
-  const finalTotal = total - discount;
+  const finalTotal = Math.max(0, total - discount);
   const currentPay = parseInt(payAmount || "0");
   const change = Math.max(0, currentPay - finalTotal);
 

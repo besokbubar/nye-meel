@@ -17,9 +17,9 @@ export default function ReceiptModal({ onClose }) {
           <div className="text-center space-y-1">
             <h4 className="font-bold text-slate-800 text-base font-sans">KASIR WARUNG</h4>
             <p className="text-slate-500 font-sans text-[11px]">Jl. A Yani No. 13, Kota Langsa, Aceh</p>
-            <p className="text-slate-400 font-sans text-[10px]">02/05/26, 09:49</p>
+            <p className="text-slate-400 font-sans text-[10px]">06/08/26, 09:49</p>
           </div>
-          <div className="flex justify-between text-slate-400 pt-2 border-t border-dashed"><span>ID Transaksi</span><span>INV-020526-0002</span></div>
+          <div className="flex justify-between text-slate-400 pt-2 border-t border-dashed"><span>ID Transaksi</span><span>INV-060826-0002</span></div>
           <div className="space-y-2 pt-2 border-t border-dashed font-sans">
             <div><div className="flex justify-between font-bold text-slate-800"><span>Teh Kotak 300ml</span><span>Rp 18.000</span></div><span className="text-[11px] text-slate-400">4 x Rp 4.500</span></div>
             <div><div className="flex justify-between font-bold text-slate-800"><span>Magnum Blue</span><span>Rp 22.000</span></div><span className="text-[11px] text-slate-400">2 x Rp 11.000</span></div>
@@ -37,8 +37,8 @@ export default function ReceiptModal({ onClose }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <button className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-100"><Share2 className="w-4 h-4" /> Kirim WA</button>
-          <button className="flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl text-xs font-bold hover:bg-blue-100"><Printer className="w-4 h-4" /> Cetak</button>
+          <button onClick={() => alert("Membuka WhatsApp...")} className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-100"><Share2 className="w-4 h-4" /> Kirim WA</button>
+          <button onClick={() => window.print()} className="flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl text-xs font-bold hover:bg-blue-100"><Printer className="w-4 h-4" /> Cetak</button>
         </div>
         <button onClick={onClose} className="w-full py-3 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 shadow-md">Tutup</button>
       </div>
