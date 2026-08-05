@@ -2,36 +2,32 @@ import React from "react";
 import { CheckCircle2, X, Share2, Printer } from "lucide-react";
 
 export default function ReceiptModal({ transaction, onClose }) {
-  // Ambil data transaksi langsung dari modal Uang Diterima
-  const data = transaction || {
-    items: [
-      { name: "Teh Kotak 300ml", price: 4500, qty: 4 },
-      { name: "Magnum Blue", price: 11000, qty: 2 },
-      { name: "Aqua 1.5L", price: 18000, qty: 1 },
-    ],
-    total: 58000,
-    discount: 3500,
-    finalTotal: 54500,
-    payAmount: 100000,
-    isDebt: false,
-    debtAmount: 0,
-    changeAmount: 45500,
-  };
+  if (!transaction) return null;
+
+  const {
+    items = [],
+    total = 0,
+    discount = 0,
+    finalTotal = 0,
+    payAmount = 0,
+    isDebt = false,
+    debtAmount = 0,
+    changeAmount = 0,
+  } = transaction;
 
   const handleSendWA = () => {
-    const statusText = data.isDebt
-      ? `Hutang: Rp ${data.debtAmount.toLocaleString()}`
-      : `Kembali: Rp ${data.changeAmount.toLocaleString()}`;
+    const statusText = isDebt
+      ? `Hutang: Rp ${debtAmount.toLocaleString()}`
+      : `Kembali: Rp ${changeAmount.toLocaleString()}`;
 
-    const text = `*KASIR WARUNG*\nJl. A Yani No. 13, Kota Langsa, Aceh\nID Transaksi: INV-060826-0002\n--------------------------\nSubtotal: Rp ${data.total.toLocaleString()}\nDiskon: -Rp ${data.discount.toLocaleString()}\nTotal Akhir: Rp ${data.finalTotal.toLocaleString()}\nDibayar: Rp ${data.payAmount.toLocaleString()}\n${statusText}\n\nTerima kasih telah berbelanja!`;
-    
+    const text = `*KASIR WARUNG*\nJl. A Yani No. 13, Kota Langsa, Aceh\nID Transaksi: INV-060826-0002\n--------------------------\nSubtotal: Rp ${total.toLocaleString()}\nDiskon: -Rp ${discount.toLocaleString()}\nTotal Akhir: Rp ${finalTotal.toLocaleString()}\nDibayar: Rp ${payAmount.toLocaleString()}\n${statusText}\n\nTerima kasih telah berbelanja!`;
+
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 shadow-2xl">
-        
         {/* Header Title */}
         <div className="flex justify-between items-center border-b pb-3">
           <div className="flex items-center gap-2">
@@ -43,7 +39,7 @@ export default function ReceiptModal({ transaction, onClose }) {
           </button>
         </div>
 
-        {/* Simulasi Kertas Struk */}
+        {/* Kertas Struk */}
         <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 text-xs space-y-3 font-sans shadow-inner">
           <div className="text-center space-y-0.5">
             <h4 className="font-extrabold text-slate-800 text-base tracking-wide">KASIR WARUNG</h4>
@@ -56,9 +52,9 @@ export default function ReceiptModal({ transaction, onClose }) {
             <span>INV-060826-0002</span>
           </div>
 
-          {/* Daftar Barang Belanjaan */}
+          {/* Daftar Barang */}
           <div className="space-y-2.5 pt-2 border-t border-dashed border-slate-300">
-            {data.items.map((item, idx) => (
+            {items.map((item, idx) => (
               <div key={idx} className="space-y-0.5">
                 <div className="flex justify-between font-bold text-slate-800">
                   <span>{item.name}</span>
@@ -74,39 +70,39 @@ export default function ReceiptModal({ transaction, onClose }) {
           {/* Rincian Finansial Dinamis */}
           <div className="space-y-1.5 pt-2 border-t border-dashed border-slate-300">
             <div className="flex justify-between text-slate-500 font-medium">
-              <span>Total Item: {data.items.reduce((s, i) => s + i.qty, 0)}</span>
+              <span>Total Item: {items.reduce((s, i) => s + i.qty, 0)}</span>
             </div>
-            
+
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
-              <span>Rp {data.total.toLocaleString()}</span>
+              <span>Rp {total.toLocaleString()}</span>
             </div>
 
             <div className="flex justify-between text-red-500 font-medium">
               <span>Diskon</span>
-              <span>-Rp {data.discount.toLocaleString()}</span>
+              <span>-Rp {discount.toLocaleString()}</span>
             </div>
 
             <div className="flex justify-between font-extrabold text-slate-800 text-sm pt-1">
               <span>Total</span>
-              <span>Rp {data.finalTotal.toLocaleString()}</span>
+              <span>Rp {finalTotal.toLocaleString()}</span>
             </div>
 
             <div className="flex justify-between text-slate-600 pt-1">
               <span>Dibayar</span>
-              <span>Rp {data.payAmount.toLocaleString()}</span>
+              <span>Rp {payAmount.toLocaleString()}</span>
             </div>
 
-            {/* Dinamis: Tampilkan 'Hutang' Jika Uang Kurang, atau 'Kembali' Jika Pas/Lebih */}
-            {data.isDebt ? (
+            {/* Jika Hutang vs Jika Kembali */}
+            {isDebt ? (
               <div className="flex justify-between font-extrabold text-red-600 text-sm bg-red-50 p-2 rounded-xl border border-red-200 mt-1">
                 <span>Hutang</span>
-                <span>Rp {data.debtAmount.toLocaleString()}</span>
+                <span>Rp {debtAmount.toLocaleString()}</span>
               </div>
             ) : (
               <div className="flex justify-between font-bold text-blue-600 text-sm pt-1">
                 <span>Kembali</span>
-                <span>Rp {data.changeAmount.toLocaleString()}</span>
+                <span>Rp {changeAmount.toLocaleString()}</span>
               </div>
             )}
           </div>
@@ -116,7 +112,7 @@ export default function ReceiptModal({ transaction, onClose }) {
           </p>
         </div>
 
-        {/* Buttons Aksi */}
+        {/* Buttons */}
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={handleSendWA}
