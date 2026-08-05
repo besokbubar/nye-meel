@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
-import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle, CheckCircle } from "lucide-react";
+import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle, CheckCircle, Printer } from "lucide-react";
 
 export default function BarangTab() {
-  // 1. Master State Kategori (Singkron Real-time)
+  // 1. Master State Kategori
   const [categories, setCategories] = useState([
     "Semua",
     "Lainnya",
@@ -22,26 +22,29 @@ export default function BarangTab() {
     { id: 5, name: "Kecap Manis ABC v3", barcode: "899080076078", price: 7500, buyPrice: 5500, discount: 0, category: "Sembako", stock: 96, minStock: 10, sku: "190420260159" },
   ]);
 
-  // States Filter & Sorting
+  // States Filter & Search
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("terbaru");
 
-  // States Modal Barang
+  // Modal Barang Form
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  // States Modal Kategori
+  // Modal Kelola Kategori
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCatIndex, setEditingCatIndex] = useState(null);
   const [editCatValue, setEditCatValue] = useState("");
 
-  // States Custom Pop-Up Confirm Delete & Toast
+  // Modal Preview Cetak Stiker Barcode Produk
+  const [previewBarcodeItem, setPreviewBarcodeItem] = useState(null);
+
+  // Custom Pop Up & Toast
   const [confirmDeleteConfig, setConfirmDeleteConfig] = useState(null);
   const [toastMessage, setToastMessage] = useState("");
-
   const [showScanner, setShowScanModal] = useState(false);
+
   const categoryContainerRef = useRef(null);
 
   const showNotification = (msg) => {
@@ -49,7 +52,7 @@ export default function BarangTab() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // LOGIKA FILTERING DINAMIS
+  // LOGIKA FILTERING
   const filteredItems = items.filter((item) => {
     const matchCategory =
       selectedCategory === "Semua" ||
@@ -63,7 +66,7 @@ export default function BarangTab() {
     return matchCategory && matchSearch;
   });
 
-  // LOGIKA SORTING DINAMIS
+  // LOGIKA SORTING
   const sortedItems = [...filteredItems].sort((a, b) => {
     if (sortBy === "az") return a.name.localeCompare(b.name);
     if (sortBy === "harga_rendah") return a.price - b.price;
@@ -79,27 +82,23 @@ export default function BarangTab() {
     }
   };
 
-  // --- HANDLER TAMBAH KATEGORI BARU ---
+  // KATEGORI HANDLERS
   const handleAddCategory = () => {
     const trimmed = newCatName.trim();
     if (!trimmed) return;
-
     if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
       showNotification(`Kategori '${trimmed}' sudah ada!`);
       return;
     }
-
     setCategories((prev) => [...prev, trimmed]);
     setSelectedCategory(trimmed);
     setNewCatName("");
     showNotification(`Kategori '${trimmed}' berhasil ditambahkan!`);
   };
 
-  // --- HANDLER EDIT NAMA KATEGORI ---
   const handleUpdateCategory = (index) => {
     const trimmed = editCatValue.trim();
     if (!trimmed) return;
-
     const oldName = categories[index];
 
     setCategories((prev) => {
@@ -108,7 +107,6 @@ export default function BarangTab() {
       return next;
     });
 
-    // Update kategori pada semua barang yang menggunakan nama lama
     setItems((prev) =>
       prev.map((item) =>
         item.category === oldName ? { ...item, category: trimmed } : item
@@ -118,10 +116,9 @@ export default function BarangTab() {
     if (selectedCategory === oldName) setSelectedCategory(trimmed);
     setEditingCatIndex(null);
     setEditCatValue("");
-    showNotification(`Kategori diubah dari '${oldName}' menjadi '${trimmed}'`);
+    showNotification(`Kategori diubah menjadi '${trimmed}'`);
   };
 
-  // --- HANDLER HAPUS KATEGORI (SEKIAN SERTA MENGHAPUS DARI MASTER STATE) ---
   const requestDeleteCategory = (catToDelete) => {
     if (catToDelete === "Semua") {
       showNotification("Kategori 'Semua' tidak dapat dihapus!");
@@ -130,30 +127,22 @@ export default function BarangTab() {
 
     setConfirmDeleteConfig({
       title: "Hapus Kategori",
-      message: `Apakah Anda yakin ingin menghapus kategori '${catToDelete}'? Barang yang berada di kategori ini akan dipindahkan ke kategori 'Lainnya'.`,
+      message: `Apakah Anda yakin ingin menghapus kategori '${catToDelete}'? Barang di dalamnya akan dipindahkan ke kategori 'Lainnya'.`,
       onConfirm: () => {
-        // 1. Hapus dari state master categories
         setCategories((prev) => prev.filter((c) => c !== catToDelete));
-
-        // 2. Pindahkan semua barang kategori ini ke 'Lainnya'
         setItems((prev) =>
           prev.map((item) =>
             item.category === catToDelete ? { ...item, category: "Lainnya" } : item
           )
         );
-
-        // 3. Jika kategori yang dihapus sedang dipilih, kembalikan filter ke 'Semua'
-        if (selectedCategory === catToDelete) {
-          setSelectedCategory("Semua");
-        }
-
+        if (selectedCategory === catToDelete) setSelectedCategory("Semua");
         setConfirmDeleteConfig(null);
         showNotification(`Kategori '${catToDelete}' berhasil dihapus!`);
       },
     });
   };
 
-  // --- HANDLERS BARANG ---
+  // ITEM HANDLERS
   const handleOpenEdit = (item) => {
     setEditingItem(item);
     setFormData({ ...item });
@@ -241,7 +230,7 @@ export default function BarangTab() {
         </div>
       </div>
 
-      {/* Filter Kategori Bar + Tombol Tambah Kategori */}
+      {/* Filter Kategori Bar */}
       <div className="space-y-2">
         <div className="relative flex items-center bg-amber-100/60 rounded-2xl p-1 border border-amber-200 gap-1">
           <button
@@ -322,8 +311,9 @@ export default function BarangTab() {
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">{item.name}</h3>
                 
+                {/* NOMOR BARCODE TERAMBIL SECARA DINAMIS DARI EDIT BARANG */}
                 {item.barcode ? (
-                  <p className="text-[11px] text-slate-400 font-mono">{item.barcode}</p>
+                  <p className="text-[11px] text-slate-400 font-mono tracking-wider">{item.barcode}</p>
                 ) : (
                   <p className="text-[11px] text-slate-300 italic">Tanpa Barcode</p>
                 )}
@@ -382,7 +372,6 @@ export default function BarangTab() {
               </button>
             </div>
 
-            {/* Input Tambah Kategori */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-600">Tambah Kategori Baru:</label>
               <div className="flex gap-2">
@@ -402,7 +391,6 @@ export default function BarangTab() {
               </div>
             </div>
 
-            {/* Daftar Kategori Real-Time */}
             <div className="space-y-2 pt-2 border-t">
               <p className="text-[11px] font-bold text-slate-400 uppercase">Daftar Kategori Saat Ini ({categories.length}):</p>
               {categories.map((cat, idx) => (
@@ -440,14 +428,12 @@ export default function BarangTab() {
                               setEditCatValue(cat);
                             }}
                             className="p-1 text-slate-400 hover:text-amber-600"
-                            title="Edit Nama Kategori"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => requestDeleteCategory(cat)}
                             className="p-1 text-slate-400 hover:text-red-600"
-                            title="Hapus Kategori"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -525,17 +511,25 @@ export default function BarangTab() {
                       type="text"
                       value={formData.barcode || ""}
                       onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                      placeholder="Contoh: 899..."
-                      className="w-full border border-slate-200 rounded-xl p-3 pr-8 font-medium focus:outline-[#FFC72C]"
+                      placeholder="Contoh: 899080..."
+                      className="w-full border border-slate-200 rounded-xl p-3 pr-9 font-medium focus:outline-[#FFC72C]"
                     />
-                    <QrCode className="absolute right-2.5 top-3 w-4 h-4 text-amber-600" />
+                    
+                    {/* KLIK ICON QR UNTUK CETAK STIKER BARCODE */}
+                    <button
+                      type="button"
+                      onClick={() => setPreviewBarcodeItem(formData)}
+                      className="absolute right-2 top-2.5 p-1 bg-amber-100 hover:bg-[#FFC72C] text-amber-800 rounded-lg transition"
+                      title="Lihat & Cetak Barcode Produk"
+                    >
+                      <QrCode className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
 
               <div>
                 <label className="block text-slate-600 font-bold mb-1">Kategori *</label>
-                {/* Dropdown Kategori Selalu Singkron dengan List Kategori Terbaru */}
                 <select
                   value={formData.category || "Lainnya"}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -626,6 +620,57 @@ export default function BarangTab() {
               className="w-full py-3 bg-[#FFC72C] text-slate-900 rounded-xl font-bold hover:bg-amber-400 active:scale-95 shadow-md mt-4 transition"
             >
               Simpan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FITUR BARU: PREVIEW & CETAK STIKER BARCODE */}
+      {previewBarcodeItem && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in zoom-in-95">
+          <div className="bg-white w-full max-w-xs rounded-3xl p-5 text-center space-y-4 shadow-2xl relative">
+            <button
+              onClick={() => setPreviewBarcodeItem(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="font-extrabold text-slate-800 text-sm">Stiker Barcode Produk</h3>
+
+            {/* Simulasi Gambar Barcode Fisik */}
+            <div className="p-4 border-2 border-dashed border-slate-200 rounded-2xl bg-amber-50/40 space-y-2 font-mono">
+              <p className="font-extrabold font-sans text-xs text-slate-800 truncate">
+                {previewBarcodeItem.name || "Nama Produk"}
+              </p>
+              
+              {/* Garis-Garis Barcode */}
+              <div className="h-14 bg-white p-2 border flex items-center justify-center space-x-1 overflow-hidden">
+                {[2,1,3,1,2,4,1,2,1,3,2,1,4,1,2,3,1,2,1,3].map((w, i) => (
+                  <span
+                    key={i}
+                    className="bg-slate-900 h-full inline-block"
+                    style={{ width: `${w}px` }}
+                  ></span>
+                ))}
+              </div>
+
+              <p className="text-xs font-bold text-slate-700 tracking-widest">
+                {previewBarcodeItem.barcode || "899080076078"}
+              </p>
+              <p className="font-extrabold font-sans text-sm text-amber-700">
+                Rp {(previewBarcodeItem.price || 0).toLocaleString()}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                window.print();
+                setPreviewBarcodeItem(null);
+              }}
+              className="w-full py-2.5 bg-[#FFC72C] text-slate-900 rounded-xl font-bold text-xs hover:bg-amber-400 shadow-md flex items-center justify-center gap-2"
+            >
+              <Printer className="w-4 h-4" /> Cetak Stiker Barcode
             </button>
           </div>
         </div>
