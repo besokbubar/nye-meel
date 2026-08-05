@@ -1,94 +1,98 @@
 import React, { useState } from "react";
-import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode } from "lucide-react";
+import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode, X, Camera, Check } from "lucide-react";
 
-export default function KasirTab({ onCheckout }) {
-  const [items, setItems] = useState([
-    { id: 1, name: "Teh Kotak 300ml", price: 4500, qty: 4 },
-    { id: 2, name: "Magnum Blue", price: 11000, qty: 2 },
-    { id: 3, name: "Aqua 1.5L", price: 18000, qty: 1 },
+export default function KasirTab() {
+  const [catalog] = useState([
+    { id: 101, name: "Teh Kotak 300ml", price: 4500, barcode: "899432901318" },
+    { id: 102, name: "Magnum Blue", price: 11000, barcode: "899426878880" },
+    { id: 103, name: "Aqua 1.5L", price: 18000, barcode: "899043057810" },
+    { id: 104, name: "Bodrex Ekstra", price: 14000, barcode: "899080076078" },
   ]);
 
-  const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const totalCount = items.reduce((sum, item) => sum + item.qty, 0);
+  const [items, setItems] = useState([
+    { id: 101, name: "Teh Kotak 300ml", price: 4500, qty: 4 },
+  ]);
 
-  const updateQty = (id, delta) => {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i
-      )
-    );
-  };
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
 
-  const removeItem = (id) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const filteredCatalog = catalog.filter((prod) =>
+    prod.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const addToCart = (product) => {
+    setItems((prev) => {
+      const existing = prev.find((i) => i.id === product.id);
+      if (existing) {
+        return prev.map((i) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+      }
+      return [...prev, { id: product.id, name: product.name, price: product.price, qty: 1 }];
+    });
   };
 
   return (
     <div className="space-y-4">
+      {/* Search Bar & Tombol Plus (+) */}
       <div className="relative flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Cari barang..."
-            className="w-full bg-slate-50 pl-9 pr-4 py-2.5 rounded-xl text-sm border border-slate-200 focus:outline-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari barang atau scan..."
+            className="w-full bg-slate-50 pl-9 pr-8 py-2.5 rounded-xl text-sm border border-slate-200 focus:outline-blue-500"
           />
         </div>
-        <button className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 hover:bg-blue-100">
+
+        {/* Tombol Plus (+) */}
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
+        >
           <Plus className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="flex justify-between items-center">
-        <h2 className="font-bold text-slate-700 text-base">Keranjang</h2>
-        <button onClick={() => setItems([])} className="text-xs text-red-500 font-semibold hover:underline">
-          Hapus Semua
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div key={item.id} className="bg-white p-3.5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-            <div>
-              <h3 className="font-bold text-slate-800 text-sm">{item.name}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">{item.qty} x Rp {item.price.toLocaleString()}</p>
-              <p className="font-bold text-blue-600 text-sm mt-1">Rp {(item.price * item.qty).toLocaleString()}</p>
+      {/* Hasil Search Otomatis */}
+      {searchQuery && (
+        <div className="bg-white border rounded-2xl p-3 space-y-2 shadow-lg">
+          {filteredCatalog.map((prod) => (
+            <div key={prod.id} onClick={() => { addToCart(prod); setSearchQuery(""); }} className="flex justify-between items-center p-2 hover:bg-blue-50 rounded-xl cursor-pointer">
+              <span className="text-xs font-bold">{prod.name}</span>
+              <span className="text-xs text-blue-600 font-bold">+ Tambah</span>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => removeItem(item.id)} className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg hover:bg-red-50">
-                <Trash2 className="w-4 h-4" />
-              </button>
-              <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50">
-                <button onClick={() => updateQty(item.id, -1)} className="p-1.5 text-slate-600 hover:bg-slate-200 rounded-l-xl"><Minus className="w-3.5 h-3.5" /></button>
-                <span className="px-3 text-xs font-bold text-slate-700">{item.qty}</span>
-                <button onClick={() => updateQty(item.id, 1)} className="p-1.5 text-slate-600 hover:bg-slate-200 rounded-r-xl"><Plus className="w-3.5 h-3.5" /></button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div className="fixed bottom-36 right-4 max-w-md">
-        <button className="bg-blue-600 text-white p-3.5 rounded-2xl shadow-lg hover:bg-blue-700 transition">
+      {/* Tombol Floating Floating QR Scanner (Kanan Bawah) */}
+      <div className="fixed bottom-36 right-4 z-10">
+        <button
+          onClick={() => setShowScanModal(true)}
+          className="bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 border-2 border-white"
+        >
           <QrCode className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 max-w-md mx-auto p-3.5 bg-white border-t border-slate-200 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="relative p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-            <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{totalCount}</span>
-            <ShoppingCart className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[11px] text-slate-400 font-medium">Total Tagihan</p>
-            <p className="font-bold text-blue-600 text-base">Rp {total.toLocaleString()}</p>
+      {/* Modal Scanner Kamera */}
+      {showScanModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center">
+            <h3 className="font-bold text-base flex items-center justify-center gap-2">
+              <Camera className="w-5 h-5 text-blue-400" /> Scanner Barcode Kamera
+            </h3>
+            <div className="w-full h-40 bg-slate-950 rounded-2xl flex items-center justify-center border-2 border-dashed border-blue-500">
+              <span className="text-xs text-blue-400 font-mono">ARAHKAN BARCODE KE SINI</span>
+            </div>
+            <button onClick={() => setShowScanModal(false)} className="w-full py-3 bg-blue-600 rounded-xl font-bold text-xs">
+              Tutup Scanner
+            </button>
           </div>
         </div>
-        <button onClick={onCheckout} disabled={items.length === 0} className="bg-blue-600 text-white font-bold px-7 py-2.5 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition">
-          Bayar
-        </button>
-      </div>
+      )}
     </div>
   );
 }
