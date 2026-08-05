@@ -2,7 +2,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "Kasir Warung",
-  description: "Aplikasi Kasir Warung Interactive",
+  description: "Aplikasi Kasir Warung Complete",
 };
 
 export default function RootLayout({ children }) {

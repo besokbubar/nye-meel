@@ -52,7 +52,7 @@ export default function Layout({ children, activeTab, setActiveTab }) {
       {/* Main Content Area */}
       <main className="p-4">{children}</main>
 
-      {/* Side Menu Drawer / Modal (Aktif saat tombol burger diklik) */}
+      {/* Side Menu Drawer / Modal */}
       {showMenu && (
         <div className="fixed inset-0 bg-black/60 z-50 flex justify-end backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-4/5 max-w-xs h-full p-5 space-y-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right">
@@ -74,19 +74,19 @@ export default function Layout({ children, activeTab, setActiveTab }) {
 
               <div className="space-y-1">
                 <button 
-                  onClick={() => { alert("Menu Profil Toko"); setShowMenu(false); }} 
+                  onClick={() => { alert("Pengaturan Toko"); setShowMenu(false); }} 
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600"
                 >
                   <User className="w-4 h-4" /> Pengaturan Toko
                 </button>
                 <button 
-                  onClick={() => { alert("Menu Sistem Kasir"); setShowMenu(false); }} 
+                  onClick={() => { alert("Pengaturan Struk"); setShowMenu(false); }} 
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600"
                 >
                   <Settings className="w-4 h-4" /> Pengaturan Struk & Printer
                 </button>
                 <button 
-                  onClick={() => { alert("Pusat Bantuan: Hubungi WhatsApp 08123456789"); setShowMenu(false); }} 
+                  onClick={() => { alert("Pusat Bantuan WhatsApp"); setShowMenu(false); }} 
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600"
                 >
                   <HelpCircle className="w-4 h-4" /> Bantuan & Bimbingan
@@ -96,7 +96,7 @@ export default function Layout({ children, activeTab, setActiveTab }) {
 
             <div className="border-t pt-4">
               <button 
-                onClick={() => { alert("Berhasil keluar aplikasi"); setShowMenu(false); }} 
+                onClick={() => { alert("Berhasil keluar sesi"); setShowMenu(false); }} 
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50"
               >
                 <LogOut className="w-4 h-4" /> Keluar Sesi
@@ -106,7 +106,7 @@ export default function Layout({ children, activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t flex justify-around py-2 px-1 z-20">
         {tabs.map((tab) => {
           const Icon = tab.icon;

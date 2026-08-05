@@ -4,7 +4,6 @@ import PaymentModal from "./PaymentModal";
 import ReceiptModal from "./ReceiptModal";
 
 export default function KasirTab() {
-  // Master Catalog Products
   const [catalog] = useState([
     { id: 101, name: "Teh Kotak 300ml", price: 4500, barcode: "899432901318" },
     { id: 102, name: "Magnum Blue", price: 11000, barcode: "899426878880" },
@@ -14,14 +13,12 @@ export default function KasirTab() {
     { id: 106, name: "Indomie Goreng", price: 3500, barcode: "899886620011" },
   ]);
 
-  // Cart State
   const [items, setItems] = useState([
     { id: 101, name: "Teh Kotak 300ml", price: 4500, qty: 4 },
     { id: 102, name: "Magnum Blue", price: 11000, qty: 2 },
     { id: 103, name: "Aqua 1.5L", price: 18000, qty: 1 },
   ]);
 
-  // Interactive States
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
@@ -29,13 +26,11 @@ export default function KasirTab() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
 
-  // Filtering for Search
   const filteredCatalog = catalog.filter((prod) =>
     prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     prod.barcode.includes(searchQuery)
   );
 
-  // Cart Handlers
   const addToCart = (product) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
@@ -63,7 +58,6 @@ export default function KasirTab() {
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const totalCount = items.reduce((sum, item) => sum + item.qty, 0);
 
-  // Simulate Barcode Scanner Scan
   const handleSimulatedScan = (product) => {
     addToCart(product);
     setScanMessage(`Berhasil scan: ${product.name}`);
@@ -72,7 +66,7 @@ export default function KasirTab() {
 
   return (
     <div className="space-y-4">
-      {/* 1. Interactive Search Bar & Plus (+) Button */}
+      {/* Search Bar & Plus (+) Button */}
       <div className="relative flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
@@ -93,7 +87,6 @@ export default function KasirTab() {
           )}
         </div>
 
-        {/* Plus (+) Button -> Opens Modal Pilih/Tambah Barang */}
         <button
           onClick={() => setShowAddModal(true)}
           className="p-2.5 bg-blue-600 text-white rounded-xl border border-blue-600 hover:bg-blue-700 active:scale-95 transition shadow-sm"
@@ -103,7 +96,7 @@ export default function KasirTab() {
         </button>
       </div>
 
-      {/* Dynamic Search Preview list if user types in Search */}
+      {/* Dynamic Search Preview */}
       {searchQuery && (
         <div className="bg-white border rounded-2xl p-3 space-y-2 shadow-lg animate-in fade-in max-h-48 overflow-y-auto">
           <p className="text-[11px] font-bold text-slate-400 uppercase">Hasil Pencarian Katalog:</p>
@@ -134,7 +127,7 @@ export default function KasirTab() {
 
       {/* Cart Items Section */}
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-slate-700 text-base">Keranjang Kasir</h2>
+        <h2 className="font-bold text-slate-700 text-base">Keranjang</h2>
         {items.length > 0 && (
           <button onClick={() => setItems([])} className="text-xs text-red-500 font-semibold hover:underline">
             Hapus Semua
@@ -177,7 +170,7 @@ export default function KasirTab() {
         )}
       </div>
 
-      {/* 2. Interactive Floating QR Scanner Button (Pojok Kanan Bawah) */}
+      {/* Floating QR Scanner Button */}
       <div className="fixed bottom-36 right-4 max-w-md z-10">
         <button
           onClick={() => setShowScanModal(true)}
@@ -188,7 +181,7 @@ export default function KasirTab() {
         </button>
       </div>
 
-      {/* Modal 1: Modal Tambah / Pilih Barang (+ Button) */}
+      {/* Modal Add Products */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom">
@@ -234,7 +227,7 @@ export default function KasirTab() {
         </div>
       )}
 
-      {/* Modal 2: Simulasi Scanner Kamera QR / Barcode */}
+      {/* Modal Scanner */}
       {showScanModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in zoom-in-95">
           <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center relative border border-slate-700">
@@ -252,9 +245,8 @@ export default function KasirTab() {
               <p className="text-xs text-slate-400">Arahkan kamera atau klik item di bawah untuk simulasi scan</p>
             </div>
 
-            {/* Viewfinder Camera Simulation */}
-            <div className="w-full h-48 bg-slate-950 rounded-2xl relative flex items-center justify-center border-2 border-dashed border-blue-500/50 overflow-hidden">
-              <div className="w-36 h-36 border-2 border-blue-400 rounded-xl animate-pulse flex items-center justify-center">
+            <div className="w-full h-44 bg-slate-950 rounded-2xl relative flex items-center justify-center border-2 border-dashed border-blue-500/50 overflow-hidden">
+              <div className="w-32 h-32 border-2 border-blue-400 rounded-xl animate-pulse flex items-center justify-center">
                 <span className="text-[10px] text-blue-400 font-mono">SCANNING...</span>
               </div>
               {scanMessage && (
