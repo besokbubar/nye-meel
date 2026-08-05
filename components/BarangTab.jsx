@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2 } from "lucide-react";
+import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle } from "lucide-react";
 
 export default function BarangTab() {
   // 1. Master Data Kategori
@@ -27,15 +27,18 @@ export default function BarangTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("terbaru");
 
-  // State Modal Edit/Tambah Barang
+  // Modal Item Form
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  // State Modal Kelola Kategori
+  // Modal Kelola Kategori Form
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCatIndex, setEditingCatIndex] = useState(null);
   const [editCatValue, setEditCatValue] = useState("");
+
+  // Custom Pop Up Confirm Dialog State
+  const [confirmDeleteConfig, setConfirmDeleteConfig] = useState(null); // { title, message, onConfirm }
 
   const [showScanner, setShowScanModal] = useState(false);
   const categoryContainerRef = useRef(null);
@@ -102,20 +105,27 @@ export default function BarangTab() {
     setEditCatValue("");
   };
 
-  const handleDeleteCategory = (catToDelete) => {
+  const requestDeleteCategory = (catToDelete) => {
     if (catToDelete === "Semua") {
       alert("Kategori 'Semua' tidak dapat dihapus!");
       return;
     }
-    if (confirm(`Hapus kategori '${catToDelete}'? Barang di dalamnya akan diubah ke 'Lainnya'.`)) {
-      setCategories(categories.filter((c) => c !== catToDelete));
-      setItems((prev) =>
-        prev.map((item) =>
-          item.category === catToDelete ? { ...item, category: "Lainnya" } : item
-        )
-      );
-      if (selectedCategory === catToDelete) setSelectedCategory("Semua");
-    }
+
+    // Panggil Pop Up Custom
+    setConfirmDeleteConfig({
+      title: "Hapus Kategori",
+      message: `Hapus kategori '${catToDelete}'? Barang di dalamnya akan otomatis diubah ke kategori 'Lainnya'.`,
+      onConfirm: () => {
+        setCategories(categories.filter((c) => c !== catToDelete));
+        setItems((prev) =>
+          prev.map((item) =>
+            item.category === catToDelete ? { ...item, category: "Lainnya" } : item
+          )
+        );
+        if (selectedCategory === catToDelete) setSelectedCategory("Semua");
+        setConfirmDeleteConfig(null);
+      },
+    });
   };
 
   // --- BARANG HANDLERS ---
@@ -158,11 +168,16 @@ export default function BarangTab() {
     setEditingItem(null);
   };
 
-  const handleDeleteItem = (id) => {
-    if (confirm("Apakah Anda yakin ingin menghapus barang ini?")) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
-      setEditingItem(null);
-    }
+  const requestDeleteItem = (id) => {
+    setConfirmDeleteConfig({
+      title: "Hapus Barang",
+      message: "Apakah Anda yakin ingin menghapus barang ini dari daftar inventaris?",
+      onConfirm: () => {
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        setEditingItem(null);
+        setConfirmDeleteConfig(null);
+      },
+    });
   };
 
   return (
@@ -176,11 +191,11 @@ export default function BarangTab() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari barang..."
-            className="w-full bg-slate-50 pl-9 pr-10 py-2.5 rounded-xl text-sm border border-slate-200 focus:outline-blue-500 font-medium"
+            className="w-full bg-amber-50/50 pl-9 pr-10 py-2.5 rounded-xl text-sm border border-amber-200 focus:outline-[#FFC72C] font-medium text-slate-800"
           />
           <button
             onClick={() => setShowScanModal(true)}
-            className="absolute right-3 top-2.5 text-slate-400 hover:text-blue-600 p-0.5"
+            className="absolute right-3 top-2.5 text-slate-400 hover:text-amber-600 p-0.5"
             title="Scan Barcode"
           >
             <QrCode className="w-4 h-4" />
@@ -188,12 +203,12 @@ export default function BarangTab() {
         </div>
       </div>
 
-      {/* Filter Kategori Bar & Tombol Tambah Kategori */}
+      {/* Filter Kategori Bar & Tombol Tambah Kategori (Warna Kuning #FFC72C) */}
       <div className="space-y-2">
-        <div className="relative flex items-center bg-slate-100/80 rounded-2xl p-1 border border-slate-200 gap-1">
+        <div className="relative flex items-center bg-amber-100/60 rounded-2xl p-1 border border-amber-200 gap-1">
           <button
             onClick={() => scrollCategory("left")}
-            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
+            className="p-1 text-slate-500 hover:text-amber-700 hover:bg-white rounded-lg transition shrink-0"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -206,10 +221,10 @@ export default function BarangTab() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                    ? "bg-[#FFC72C] text-slate-900 shadow-md scale-105"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-amber-50"
                 }`}
               >
                 {cat}
@@ -219,7 +234,7 @@ export default function BarangTab() {
 
           <button
             onClick={() => scrollCategory("right")}
-            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
+            className="p-1 text-slate-500 hover:text-amber-700 hover:bg-white rounded-lg transition shrink-0"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -227,7 +242,7 @@ export default function BarangTab() {
           {/* Tombol Utama Tambah & Kelola Kategori */}
           <button
             onClick={() => setShowCategoryModal(true)}
-            className="px-2.5 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl transition shrink-0 flex items-center gap-1 text-xs font-bold shadow-sm"
+            className="px-2.5 py-1.5 bg-[#FFC72C] text-slate-900 hover:bg-amber-400 rounded-xl transition shrink-0 flex items-center gap-1 text-xs font-bold shadow-sm"
             title="Tambah / Kelola Kategori"
           >
             <FolderPlus className="w-3.5 h-3.5" />
@@ -245,7 +260,7 @@ export default function BarangTab() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="text-xs text-slate-600 border rounded-xl px-2.5 py-1.5 bg-white font-semibold focus:outline-blue-500 cursor-pointer shadow-sm"
+          className="text-xs text-slate-700 border rounded-xl px-2.5 py-1.5 bg-white font-bold focus:outline-[#FFC72C] cursor-pointer shadow-sm"
         >
           <option value="terbaru">Terbaru ∨</option>
           <option value="az">Nama (A-Z) ∨</option>
@@ -261,16 +276,15 @@ export default function BarangTab() {
           <div
             key={item.id}
             onClick={() => handleOpenEdit(item)}
-            className="bg-white p-3.5 rounded-2xl border border-slate-100 flex justify-between items-center cursor-pointer hover:border-blue-400 transition shadow-sm"
+            className="bg-white p-3.5 rounded-2xl border border-slate-100 flex justify-between items-center cursor-pointer hover:border-amber-400 transition shadow-sm"
           >
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-xl font-bold">
+              <div className="w-12 h-12 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-center text-xl font-bold">
                 📦
               </div>
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">{item.name}</h3>
                 
-                {/* HAPUS BCD: Menampilkan Barcode murni jika ada, jika kosong hanya tampilkan nama */}
                 {item.barcode ? (
                   <p className="text-[11px] text-slate-400 font-mono">{item.barcode}</p>
                 ) : (
@@ -278,17 +292,17 @@ export default function BarangTab() {
                 )}
 
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs font-extrabold text-blue-600">
+                  <span className="text-xs font-extrabold text-amber-700">
                     Rp {item.price.toLocaleString()}
                   </span>
-                  <span className="bg-slate-100 text-slate-600 text-[10px] px-2.5 py-0.5 rounded-md font-semibold">
+                  <span className="bg-amber-100/70 text-slate-800 text-[10px] px-2.5 py-0.5 rounded-md font-semibold">
                     {item.category}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-center">
+            <div className="bg-amber-50/50 border border-amber-200 px-3.5 py-2 rounded-xl text-center">
               <p className="text-[9px] text-slate-400 font-bold uppercase leading-none">Stok</p>
               <span className="text-xs font-extrabold text-slate-800">{item.stock}</span>
             </div>
@@ -296,11 +310,11 @@ export default function BarangTab() {
         ))}
 
         {sortedItems.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs space-y-2">
+          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-amber-200 text-slate-400 text-xs space-y-2">
             <p>Tidak ada barang di kategori <strong>"{selectedCategory}"</strong></p>
             <button
               onClick={handleOpenAddNew}
-              className="text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-xl hover:bg-blue-100"
+              className="text-slate-900 font-bold bg-[#FFC72C] px-3.5 py-1.5 rounded-xl hover:bg-amber-400 shadow-sm"
             >
               + Tambah Barang Baru
             </button>
@@ -311,19 +325,19 @@ export default function BarangTab() {
       {/* Floating Add (+ Barang Baru) Button */}
       <button
         onClick={handleOpenAddNew}
-        className="fixed bottom-20 right-4 max-w-md bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition border-2 border-white"
+        className="fixed bottom-20 right-4 max-w-md bg-[#FFC72C] text-slate-900 p-4 rounded-2xl shadow-xl hover:bg-amber-400 active:scale-95 transition border-2 border-white font-bold"
         title="Tambah Barang Baru"
       >
         <Plus className="w-6 h-6" />
       </button>
 
-      {/* MODAL KELOLA & TAMBAH KATEGORI */}
+      {/* MODAL 1: KELOLA KATEGORI */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in zoom-in-95 shadow-2xl">
             <div className="flex justify-between items-center border-b pb-3">
               <div className="flex items-center gap-2">
-                <span className="p-2 bg-blue-100 text-blue-600 rounded-xl"><FolderPlus className="w-5 h-5" /></span>
+                <span className="p-2 bg-amber-100 text-slate-900 rounded-xl"><FolderPlus className="w-5 h-5 text-amber-700" /></span>
                 <h3 className="font-bold text-base text-slate-800">Kelola Kategori</h3>
               </div>
               <button onClick={() => setShowCategoryModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
@@ -339,19 +353,19 @@ export default function BarangTab() {
                   type="text"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="Contoh: Makanan, Minuman, Snack..."
-                  className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-blue-500"
+                  placeholder="Contoh: Snack, Minuman, Chicken..."
+                  className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-[#FFC72C]"
                 />
                 <button
                   onClick={handleAddCategory}
-                  className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700"
+                  className="px-4 py-2 bg-[#FFC72C] text-slate-900 text-xs font-bold rounded-xl hover:bg-amber-400 shadow-sm"
                 >
                   + Tambah
                 </button>
               </div>
             </div>
 
-            {/* Daftar Kategori Yang Ada */}
+            {/* Daftar Kategori */}
             <div className="space-y-2 pt-2 border-t">
               <p className="text-[11px] font-bold text-slate-400 uppercase">Daftar Kategori Saat Ini:</p>
               {categories.map((cat, idx) => (
@@ -362,7 +376,7 @@ export default function BarangTab() {
                         type="text"
                         value={editCatValue}
                         onChange={(e) => setEditCatValue(e.target.value)}
-                        className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold"
+                        className="flex-1 border border-amber-300 rounded-lg px-2 py-1 text-xs font-bold"
                         autoFocus
                       />
                       <button
@@ -388,13 +402,13 @@ export default function BarangTab() {
                               setEditingCatIndex(idx);
                               setEditCatValue(cat);
                             }}
-                            className="p-1 text-slate-400 hover:text-blue-600"
+                            className="p-1 text-slate-400 hover:text-amber-600"
                             title="Edit Nama"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => handleDeleteCategory(cat)}
+                            onClick={() => requestDeleteCategory(cat)}
                             className="p-1 text-slate-400 hover:text-red-600"
                             title="Hapus Kategori"
                           >
@@ -418,13 +432,13 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL EDIT / TAMBAH BARANG */}
+      {/* MODAL 2: EDIT / TAMBAH BARANG */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom shadow-2xl">
             <div className="flex justify-between items-center border-b pb-3">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">📦</span>
+                <span className="p-1.5 bg-amber-100 text-slate-900 rounded-lg">📦</span>
                 <h3 className="font-bold text-base text-slate-800">
                   {items.some((i) => i.id === editingItem.id) ? "Edit Barang" : "Tambah Barang Baru"}
                 </h3>
@@ -432,7 +446,7 @@ export default function BarangTab() {
               <div className="flex items-center gap-3">
                 {items.some((i) => i.id === editingItem.id) && (
                   <button
-                    onClick={() => handleDeleteItem(editingItem.id)}
+                    onClick={() => requestDeleteItem(editingItem.id)}
                     className="text-red-500 hover:text-red-700 p-1"
                     title="Hapus Barang"
                   >
@@ -453,7 +467,7 @@ export default function BarangTab() {
                   value={formData.name || ""}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Masukkan nama barang..."
-                  className="w-full border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-blue-500"
+                  className="w-full border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#FFC72C]"
                 />
               </div>
 
@@ -474,10 +488,10 @@ export default function BarangTab() {
                       type="text"
                       value={formData.barcode || ""}
                       onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                      placeholder="Contoh: 8994329..."
-                      className="w-full border border-slate-200 rounded-xl p-3 pr-8 font-medium focus:outline-blue-500"
+                      placeholder="Contoh: 899..."
+                      className="w-full border border-slate-200 rounded-xl p-3 pr-8 font-medium focus:outline-[#FFC72C]"
                     />
-                    <QrCode className="absolute right-2.5 top-3 w-4 h-4 text-blue-600" />
+                    <QrCode className="absolute right-2.5 top-3 w-4 h-4 text-amber-600" />
                   </div>
                 </div>
               </div>
@@ -487,7 +501,7 @@ export default function BarangTab() {
                 <select
                   value={formData.category || "Lainnya"}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full border border-slate-200 rounded-xl p-3 bg-white font-semibold text-slate-800 focus:outline-blue-500"
+                  className="w-full border border-slate-200 rounded-xl p-3 bg-white font-semibold text-slate-800 focus:outline-[#FFC72C]"
                 >
                   {categories
                     .filter((c) => c !== "Semua")
@@ -508,7 +522,7 @@ export default function BarangTab() {
                       type="number"
                       value={formData.buyPrice || 0}
                       onChange={(e) => setFormData({ ...formData, buyPrice: parseInt(e.target.value || "0") })}
-                      className="w-full border border-slate-200 rounded-xl p-3 pl-9 font-bold focus:outline-blue-500"
+                      className="w-full border border-slate-200 rounded-xl p-3 pl-9 font-bold focus:outline-[#FFC72C]"
                     />
                   </div>
                 </div>
@@ -520,7 +534,7 @@ export default function BarangTab() {
                       type="number"
                       value={formData.price || 0}
                       onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value || "0") })}
-                      className="w-full border border-slate-200 rounded-xl p-3 pl-9 font-bold text-blue-600 focus:outline-blue-500"
+                      className="w-full border border-slate-200 rounded-xl p-3 pl-9 font-bold text-amber-700 focus:outline-[#FFC72C]"
                     />
                   </div>
                 </div>
@@ -534,7 +548,7 @@ export default function BarangTab() {
                     type="number"
                     value={formData.discount || 0}
                     onChange={(e) => setFormData({ ...formData, discount: parseInt(e.target.value || "0") })}
-                    className="w-full border border-slate-200 rounded-xl p-3 pl-9 font-semibold focus:outline-blue-500"
+                    className="w-full border border-slate-200 rounded-xl p-3 pl-9 font-semibold focus:outline-[#FFC72C]"
                   />
                 </div>
               </div>
@@ -548,7 +562,7 @@ export default function BarangTab() {
                       type="number"
                       value={formData.stock || 0}
                       onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value || "0") })}
-                      className="w-full border border-slate-200 rounded-xl p-3 pl-8 pr-10 font-bold focus:outline-blue-500"
+                      className="w-full border border-slate-200 rounded-xl p-3 pl-8 pr-10 font-bold focus:outline-[#FFC72C]"
                     />
                     <span className="absolute right-3 text-slate-400 text-xs">pcs</span>
                   </div>
@@ -561,7 +575,7 @@ export default function BarangTab() {
                       type="number"
                       value={formData.minStock || 0}
                       onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value || "0") })}
-                      className="w-full border border-slate-200 rounded-xl p-3 pl-8 pr-10 font-bold focus:outline-blue-500"
+                      className="w-full border border-slate-200 rounded-xl p-3 pl-8 pr-10 font-bold focus:outline-[#FFC72C]"
                     />
                     <span className="absolute right-3 text-slate-400 text-xs">pcs</span>
                   </div>
@@ -571,7 +585,7 @@ export default function BarangTab() {
 
             <button
               onClick={handleSave}
-              className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 active:scale-95 shadow-md mt-4 transition"
+              className="w-full py-3 bg-[#FFC72C] text-slate-900 rounded-xl font-bold hover:bg-amber-400 active:scale-95 shadow-md mt-4 transition"
             >
               Simpan
             </button>
@@ -579,7 +593,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL SCANNER BARCODE */}
+      {/* MODAL 3: SCANNER BARCODE */}
       {showScanner && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in zoom-in-95">
           <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center relative border border-slate-700">
@@ -587,14 +601,47 @@ export default function BarangTab() {
               <X className="w-6 h-6" />
             </button>
             <h3 className="font-bold text-base flex items-center justify-center gap-2">
-              <Camera className="w-5 h-5 text-blue-400" /> Scanner Barcode Kamera
+              <Camera className="w-5 h-5 text-amber-400" /> Scanner Barcode Kamera
             </h3>
-            <div className="w-full h-40 bg-slate-950 rounded-2xl flex items-center justify-center border-2 border-dashed border-blue-500/50">
-              <span className="text-xs text-blue-400 font-mono">ARAHKAN BARCODE DI SINI</span>
+            <div className="w-full h-40 bg-slate-950 rounded-2xl flex items-center justify-center border-2 border-dashed border-amber-500/50">
+              <span className="text-xs text-amber-400 font-mono">ARAHKAN BARCODE DI SINI</span>
             </div>
-            <button onClick={() => setShowScanModal(false)} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-xs">
+            <button onClick={() => setShowScanModal(false)} className="w-full py-3 bg-[#FFC72C] text-slate-900 font-bold text-xs rounded-xl">
               Tutup Scanner
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. MODAL CUSTOM POP UP CONFIRM DELETE (GANTIKAN ALERT BROWSER) */}
+      {confirmDeleteConfig && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="w-14 h-14 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-slate-800 text-lg">{confirmDeleteConfig.title}</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                {confirmDeleteConfig.message}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                onClick={() => setConfirmDeleteConfig(null)}
+                className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDeleteConfig.onConfirm}
+                className="py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-md transition"
+              >
+                Ya, Hapus
+              </button>
+            </div>
           </div>
         </div>
       )}
