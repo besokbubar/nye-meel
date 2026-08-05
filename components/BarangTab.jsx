@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
-import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, Settings, Edit2 } from "lucide-react";
+import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2 } from "lucide-react";
 
 export default function BarangTab() {
-  // 1. Master Data Kategori (Bisa Ditambah, Di-edit, Dihapus)
+  // 1. Master Data Kategori
   const [categories, setCategories] = useState([
     "Semua",
     "Lainnya",
@@ -15,11 +15,11 @@ export default function BarangTab() {
 
   // 2. Master Data Barang
   const [items, setItems] = useState([
-    { id: 1, name: "Teh Kotak 300ml", barcode: "899432901318", price: 4500, buyPrice: 3000, discount: 0, category: "Minuman", stock: 50, minStock: 10, sku: "190420260156" },
-    { id: 2, name: "Bodrex", barcode: "899426878880", price: 14000, buyPrice: 10000, discount: 0, category: "Obat-obatan", stock: 76, minStock: 15, sku: "190420260157" },
-    { id: 3, name: "Dunhill Mild", barcode: "899043057810", price: 4500, buyPrice: 3500, discount: 0, category: "Rokok", stock: 73, minStock: 20, sku: "190420260158" },
-    { id: 4, name: "Kecap Manis ABC v3", barcode: "899080076078", price: 7500, buyPrice: 5500, discount: 0, category: "Sembako", stock: 96, minStock: 10, sku: "190420260159" },
-    { id: 5, name: "Bawang Goreng", barcode: "899214611863", price: 17500, buyPrice: 12000, discount: 0, category: "Lainnya", stock: 68, minStock: 5, sku: "190420260160" },
+    { id: 1, name: "Ceker Ayam Pedas", barcode: "", price: 10000, buyPrice: 7000, discount: 0, category: "Makanan", stock: 100, minStock: 10, sku: "190420260155" },
+    { id: 2, name: "Indomie Goreng", barcode: "899886620011", price: 3500, buyPrice: 2800, discount: 0, category: "Makanan", stock: 120, minStock: 20, sku: "190420260162" },
+    { id: 3, name: "Aqua 1.5L", barcode: "899043057811", price: 18000, buyPrice: 14000, discount: 0, category: "Minuman", stock: 42, minStock: 10, sku: "190420260161" },
+    { id: 4, name: "Bawang Goreng", barcode: "899214611863", price: 17500, buyPrice: 12000, discount: 0, category: "Lainnya", stock: 68, minStock: 5, sku: "190420260160" },
+    { id: 5, name: "Kecap Manis ABC v3", barcode: "899080076078", price: 7500, buyPrice: 5500, discount: 0, category: "Sembako", stock: 96, minStock: 10, sku: "190420260159" },
   ]);
 
   // States
@@ -27,11 +27,11 @@ export default function BarangTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("terbaru");
 
-  // Modal Item Form
+  // State Modal Edit/Tambah Barang
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  // Modal Kelola Kategori Form
+  // State Modal Kelola Kategori
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCatIndex, setEditingCatIndex] = useState(null);
@@ -40,7 +40,7 @@ export default function BarangTab() {
   const [showScanner, setShowScanModal] = useState(false);
   const categoryContainerRef = useRef(null);
 
-  // LOGIKA FILTER AKURAT
+  // LOGIKA FILTER
   const filteredItems = items.filter((item) => {
     const matchCategory =
       selectedCategory === "Semua" ||
@@ -78,6 +78,7 @@ export default function BarangTab() {
       return;
     }
     setCategories([...categories, newCatName.trim()]);
+    setSelectedCategory(newCatName.trim());
     setNewCatName("");
   };
 
@@ -86,12 +87,10 @@ export default function BarangTab() {
     const oldName = categories[index];
     const newName = editCatValue.trim();
 
-    // Update list kategori
     const updated = [...categories];
     updated[index] = newName;
     setCategories(updated);
 
-    // Update kategori barang yang menggunakan nama lama
     setItems((prev) =>
       prev.map((item) =>
         item.category === oldName ? { ...item, category: newName } : item
@@ -119,7 +118,7 @@ export default function BarangTab() {
     }
   };
 
-  // --- HANDLERS ITEM ---
+  // --- BARANG HANDLERS ---
   const handleOpenEdit = (item) => {
     setEditingItem(item);
     setFormData({ ...item });
@@ -189,49 +188,52 @@ export default function BarangTab() {
         </div>
       </div>
 
-      {/* Filter Kategori Bar + Tombol Kelola Kategori */}
-      <div className="relative flex items-center bg-slate-100/70 rounded-2xl p-1 border border-slate-200 gap-1">
-        <button
-          onClick={() => scrollCategory("left")}
-          className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
+      {/* Filter Kategori Bar & Tombol Tambah Kategori */}
+      <div className="space-y-2">
+        <div className="relative flex items-center bg-slate-100/80 rounded-2xl p-1 border border-slate-200 gap-1">
+          <button
+            onClick={() => scrollCategory("left")}
+            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
 
-        <div
-          ref={categoryContainerRef}
-          className="flex gap-2 overflow-x-auto py-1 px-1 scrollbar-none scroll-smooth w-full items-center"
-        >
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                selectedCategory === cat
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          <div
+            ref={categoryContainerRef}
+            className="flex gap-2 overflow-x-auto py-1 px-1 scrollbar-none scroll-smooth w-full items-center"
+          >
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  selectedCategory === cat
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => scrollCategory("right")}
+            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
+          {/* Tombol Utama Tambah & Kelola Kategori */}
+          <button
+            onClick={() => setShowCategoryModal(true)}
+            className="px-2.5 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl transition shrink-0 flex items-center gap-1 text-xs font-bold shadow-sm"
+            title="Tambah / Kelola Kategori"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">+ Kategori</span>
+          </button>
         </div>
-
-        <button
-          onClick={() => scrollCategory("right")}
-          className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        {/* Tombol Kelola Kategori */}
-        <button
-          onClick={() => setShowCategoryModal(true)}
-          className="p-1.5 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 rounded-xl transition shrink-0 flex items-center gap-1 text-xs font-bold"
-          title="Kelola Kategori"
-        >
-          <Settings className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       {/* Counter & Sorting */}
@@ -267,22 +269,28 @@ export default function BarangTab() {
               </div>
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">{item.name}</h3>
-                {/* TEKS DIPERBAIKI: Menampilkan Kategori secara langsung */}
-                <p className="text-[11px] text-slate-400 font-medium">
-                  Kategori: <span className="font-semibold text-slate-600">{item.category}</span>
-                </p>
+                
+                {/* HAPUS BCD: Menampilkan Barcode murni jika ada, jika kosong hanya tampilkan nama */}
+                {item.barcode ? (
+                  <p className="text-[11px] text-slate-400 font-mono">{item.barcode}</p>
+                ) : (
+                  <p className="text-[11px] text-slate-300 italic">Tanpa Barcode</p>
+                )}
+
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs font-extrabold text-blue-600">
                     Rp {item.price.toLocaleString()}
                   </span>
-                  <span className="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-md font-medium">
+                  <span className="bg-slate-100 text-slate-600 text-[10px] px-2.5 py-0.5 rounded-md font-semibold">
                     {item.category}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-center">
-              <span className="text-xs font-extrabold text-slate-700">{item.stock}</span>
+
+            <div className="bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-center">
+              <p className="text-[9px] text-slate-400 font-bold uppercase leading-none">Stok</p>
+              <span className="text-xs font-extrabold text-slate-800">{item.stock}</span>
             </div>
           </div>
         ))}
@@ -300,7 +308,7 @@ export default function BarangTab() {
         )}
       </div>
 
-      {/* Floating Add (+ Baru) Button */}
+      {/* Floating Add (+ Barang Baru) Button */}
       <button
         onClick={handleOpenAddNew}
         className="fixed bottom-20 right-4 max-w-md bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition border-2 border-white"
@@ -309,13 +317,13 @@ export default function BarangTab() {
         <Plus className="w-6 h-6" />
       </button>
 
-      {/* MODAL 1: KELOLA KATEGORI (Tambah, Edit, Hapus) */}
+      {/* MODAL KELOLA & TAMBAH KATEGORI */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in zoom-in-95 shadow-2xl">
             <div className="flex justify-between items-center border-b pb-3">
               <div className="flex items-center gap-2">
-                <span className="p-2 bg-blue-100 text-blue-600 rounded-xl"><Settings className="w-5 h-5" /></span>
+                <span className="p-2 bg-blue-100 text-blue-600 rounded-xl"><FolderPlus className="w-5 h-5" /></span>
                 <h3 className="font-bold text-base text-slate-800">Kelola Kategori</h3>
               </div>
               <button onClick={() => setShowCategoryModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
@@ -324,23 +332,26 @@ export default function BarangTab() {
             </div>
 
             {/* Input Tambah Kategori Baru */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                placeholder="Nama kategori baru..."
-                className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-blue-500"
-              />
-              <button
-                onClick={handleAddCategory}
-                className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700"
-              >
-                + Tambah
-              </button>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-600">Tambah Kategori Baru:</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="Contoh: Makanan, Minuman, Snack..."
+                  className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-blue-500"
+                />
+                <button
+                  onClick={handleAddCategory}
+                  className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700"
+                >
+                  + Tambah
+                </button>
+              </div>
             </div>
 
-            {/* Daftar Kategori */}
+            {/* Daftar Kategori Yang Ada */}
             <div className="space-y-2 pt-2 border-t">
               <p className="text-[11px] font-bold text-slate-400 uppercase">Daftar Kategori Saat Ini:</p>
               {categories.map((cat, idx) => (
@@ -407,7 +418,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL 2: EDIT / TAMBAH BARANG */}
+      {/* MODAL EDIT / TAMBAH BARANG */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom shadow-2xl">
@@ -463,7 +474,7 @@ export default function BarangTab() {
                       type="text"
                       value={formData.barcode || ""}
                       onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                      placeholder="899..."
+                      placeholder="Contoh: 8994329..."
                       className="w-full border border-slate-200 rounded-xl p-3 pr-8 font-medium focus:outline-blue-500"
                     />
                     <QrCode className="absolute right-2.5 top-3 w-4 h-4 text-blue-600" />
@@ -568,7 +579,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL 3: SCANNER BARCODE */}
+      {/* MODAL SCANNER BARCODE */}
       {showScanner && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in zoom-in-95">
           <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center relative border border-slate-700">
