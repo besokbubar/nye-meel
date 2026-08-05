@@ -36,12 +36,10 @@ export default function BarangTab({ items = [], setItems }) {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // FUNGSI OTO-GENERATE SKU & BARCODE UNIK
   const generateAutoCode = () => {
     const randomSkuNum = Math.floor(10000000 + Math.random() * 90000000);
     const autoSku = `SKU-${randomSkuNum}`;
     
-    // Barcode standar Indonesia (899 + 9 digit acak)
     const randomBarcodeNum = Math.floor(100000000 + Math.random() * 900000000);
     const autoBarcode = `899${randomBarcodeNum}`;
 
@@ -140,7 +138,6 @@ export default function BarangTab({ items = [], setItems }) {
     setFormData({ ...item });
   };
 
-  // TAMBAH BARANG BARU (AUTO SKU & BARCODE DI-GENERATE DISINI)
   const handleOpenAddNew = () => {
     const validCatList = categories.filter((c) => c !== "Semua");
     const defaultCat = validCatList.includes(selectedCategory) ? selectedCategory : "Lainnya";
@@ -163,7 +160,6 @@ export default function BarangTab({ items = [], setItems }) {
     setFormData(newItem);
   };
 
-  // REFRESH ULANG NOMOR KODE KHUSUS PADA BARANG BARU
   const handleRefreshAutoCodes = () => {
     const { autoSku, autoBarcode } = generateAutoCode();
     setFormData((prev) => ({
@@ -189,7 +185,7 @@ export default function BarangTab({ items = [], setItems }) {
     });
 
     setEditingItem(null);
-    showNotification("Data barang berhasil disimpan & tersambung ke Kasir!");
+    showNotification("Data barang berhasil disimpan!");
   };
 
   const requestDeleteItem = (id) => {
@@ -282,7 +278,7 @@ export default function BarangTab({ items = [], setItems }) {
         </div>
       </div>
 
-      {/* Counter & Sorting */}
+      {/* Counter & Sorting (HURUF 'v' SUDAH DIHAPUS) */}
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-slate-700 text-base">
           Daftar {sortedItems.length} Barang
@@ -291,13 +287,13 @@ export default function BarangTab({ items = [], setItems }) {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="text-xs text-slate-700 border rounded-xl px-2.5 py-1.5 bg-white font-bold focus:outline-[#FFC72C] cursor-pointer shadow-sm"
+          className="text-xs text-slate-700 border border-slate-200 rounded-xl px-2.5 py-1.5 bg-white font-bold focus:outline-[#FFC72C] cursor-pointer shadow-sm"
         >
-          <option value="terbaru">Terbaru ∨</option>
-          <option value="az">Nama (A-Z) ∨</option>
-          <option value="harga_rendah">Harga Termurah ∨</option>
-          <option value="harga_tinggi">Harga Termahal ∨</option>
-          <option value="stok">Stok Terbanyak ∨</option>
+          <option value="terbaru">Terbaru</option>
+          <option value="az">Nama (A-Z)</option>
+          <option value="harga_rendah">Harga Termurah</option>
+          <option value="harga_tinggi">Harga Termahal</option>
+          <option value="stok">Stok Terbanyak</option>
         </select>
       </div>
 
@@ -352,7 +348,7 @@ export default function BarangTab({ items = [], setItems }) {
         )}
       </div>
 
-      {/* Floating Add (+ Barang Baru) Button */}
+      {/* Floating Add Button */}
       <button
         onClick={handleOpenAddNew}
         className="fixed bottom-20 right-4 max-w-md bg-[#FFC72C] text-slate-900 p-4 rounded-2xl shadow-xl hover:bg-amber-400 active:scale-95 transition border-2 border-white font-bold"
@@ -497,7 +493,6 @@ export default function BarangTab({ items = [], setItems }) {
                 />
               </div>
 
-              {/* SKU & BARCODE AUTO-GENERATED & READ ONLY */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-600 font-bold mb-1">SKU (Otomatis) 🔒</label>
@@ -519,7 +514,6 @@ export default function BarangTab({ items = [], setItems }) {
                     />
                     
                     <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
-                      {/* Tombol Acak Ulang / Refresh Kode */}
                       <button
                         type="button"
                         onClick={handleRefreshAutoCodes}
@@ -529,7 +523,6 @@ export default function BarangTab({ items = [], setItems }) {
                         <RefreshCw className="w-3.5 h-3.5" />
                       </button>
 
-                      {/* Tombol Preview Barcode */}
                       <button
                         type="button"
                         onClick={() => setPreviewBarcodeItem(formData)}
@@ -640,7 +633,7 @@ export default function BarangTab({ items = [], setItems }) {
         </div>
       )}
 
-      {/* Modal Preview Stiker Barcode */}
+      {/* Modal Preview Barcode */}
       {previewBarcodeItem && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in zoom-in-95">
           <div className="bg-white w-full max-w-xs rounded-3xl p-5 text-center space-y-4 shadow-2xl relative">
