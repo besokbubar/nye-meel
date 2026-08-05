@@ -1,31 +1,34 @@
-import React, { useState } from "react";
-import { Search, Plus, QrCode, Trash2, X } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, Check } from "lucide-react";
 
 export default function BarangTab() {
-  // 1. State Master Daftar Barang (Bisa Di-edit/Ditambah/Dihapus)
+  // 1. Master Data Barang dengan Kategori yang Tepat
   const [items, setItems] = useState([
     { id: 1, name: "Teh Kotak 300ml", barcode: "899432901318", price: 4500, buyPrice: 3000, discount: 0, category: "Minuman", stock: 50, minStock: 10, sku: "190420260156" },
     { id: 2, name: "Bodrex", barcode: "899426878880", price: 14000, buyPrice: 10000, discount: 0, category: "Obat-obatan", stock: 76, minStock: 15, sku: "190420260157" },
     { id: 3, name: "Dunhill Mild", barcode: "899043057810", price: 4500, buyPrice: 3500, discount: 0, category: "Rokok", stock: 73, minStock: 20, sku: "190420260158" },
     { id: 4, name: "Kecap Manis ABC v3", barcode: "899080076078", price: 7500, buyPrice: 5500, discount: 0, category: "Sembako", stock: 96, minStock: 10, sku: "190420260159" },
     { id: 5, name: "Bawang Goreng", barcode: "899214611863", price: 17500, buyPrice: 12000, discount: 0, category: "Lainnya", stock: 68, minStock: 5, sku: "190420260160" },
+    { id: 6, name: "Aqua 1.5L", barcode: "899043057811", price: 18000, buyPrice: 14000, discount: 0, category: "Minuman", stock: 42, minStock: 10, sku: "190420260161" },
+    { id: 7, name: "Indomie Goreng", barcode: "899886620011", price: 3500, buyPrice: 2800, discount: 0, category: "Makanan", stock: 120, minStock: 20, sku: "190420260162" },
   ]);
 
-  // 2. State Filter & Search
+  // 2. States Filter, Sorting, Search, Modal
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
-
-  // 3. State Form Edit/Tambah
-  const [editingItem, setEditingItem] = useState(null); // Item yang sedang diedit/dibuat
+  const [sortBy, setSortBy] = useState("terbaru"); // terbaru, az, harga_rendah, harga_tinggi, stok
+  const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const [showScanner, setShowScanModal] = useState(false);
 
+  const categoryContainerRef = useRef(null);
   const categories = ["Semua", "Lainnya", "Makanan", "Minuman", "Obat-obatan", "Rokok", "Sembako"];
 
-  // FILTERING DYNAMIC
+  // 3. LOGIKA FILTER KATEGORI & PENCARIAN SANGAT AKURAT
   const filteredItems = items.filter((item) => {
     const matchCategory =
       selectedCategory === "Semua" ||
-      item.category.toLowerCase() === selectedCategory.toLowerCase();
+      item.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
 
     const matchSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,20 +38,36 @@ export default function BarangTab() {
     return matchCategory && matchSearch;
   });
 
-  // Buka Modal Edit
+  // LOGIKA SORTING / URUTAN
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    if (sortBy === "az") return a.name.localeCompare(b.name);
+    if (sortBy === "harga_rendah") return a.price - b.price;
+    if (sortBy === "harga_tinggi") return b.price - a.price;
+    if (sortBy === "stok") return b.stock - a.stock;
+    return b.id - a.id; // terbaru
+  });
+
+  // Handle Scroll Panah Kategori
+  const scrollCategory = (direction) => {
+    if (categoryContainerRef.current) {
+      const scrollAmount = direction === "left" ? -150 : 150;
+      categoryContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  // Open Edit / Add Form
   const handleOpenEdit = (item) => {
     setEditingItem(item);
     setFormData({ ...item });
   };
 
-  // Buka Modal Tambah Barang Baru
   const handleOpenAddNew = () => {
     const newItem = {
       id: Date.now(),
       name: "",
       barcode: "",
       sku: `${Date.now()}`.slice(-12),
-      category: "Lainnya",
+      category: selectedCategory === "Semua" ? "Lainnya" : selectedCategory,
       buyPrice: 0,
       price: 0,
       discount: 0,
@@ -59,7 +78,6 @@ export default function BarangTab() {
     setFormData(newItem);
   };
 
-  // Simpan Perubahan (Save Edit / New)
   const handleSave = () => {
     if (!formData.name.trim()) {
       alert("Nama barang wajib diisi!");
@@ -77,9 +95,8 @@ export default function BarangTab() {
     setEditingItem(null);
   };
 
-  // Hapus Barang
   const handleDelete = (id) => {
-    if (confirm("Apakah kamu yakin ingin menghapus barang ini?")) {
+    if (confirm("Apakah Anda yakin ingin menghapus barang ini?")) {
       setItems((prev) => prev.filter((i) => i.id !== id));
       setEditingItem(null);
     }
@@ -95,57 +112,84 @@ export default function BarangTab() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama, barcode, atau SKU..."
-            className="w-full bg-slate-50 pl-9 pr-8 py-2.5 rounded-xl text-sm border border-slate-200 focus:outline-blue-500 font-medium"
+            placeholder="Cari barang..."
+            className="w-full bg-slate-50 pl-9 pr-10 py-2.5 rounded-xl text-sm border border-slate-200 focus:outline-blue-500 font-medium"
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            onClick={() => setShowScanModal(true)}
+            className="absolute right-3 top-2.5 text-slate-400 hover:text-blue-600 p-0.5"
+            title="Scan Barcode"
+          >
+            <QrCode className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Filter Kategori Pills */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedCategory === cat
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Filter Kategori Pills + Panah Navigation Bar */}
+      <div className="relative flex items-center bg-slate-100/70 rounded-2xl p-1 border border-slate-200">
+        <button
+          onClick={() => scrollCategory("left")}
+          className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        <div
+          ref={categoryContainerRef}
+          className="flex gap-2 overflow-x-auto py-1 px-1 scrollbar-none scroll-smooth w-full"
+        >
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                selectedCategory === cat
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => scrollCategory("right")}
+          className="p-1 text-slate-500 hover:text-blue-600 hover:bg-white rounded-lg transition shrink-0"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Title & Total Item Counter */}
+      {/* Counter & Interaktif Dropdown Urutan */}
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-slate-700 text-base">
-          Daftar {filteredItems.length} Barang
+          Daftar {sortedItems.length} Barang
         </h2>
-        <span className="text-xs text-slate-400 border rounded-lg px-2.5 py-1 bg-white">
-          Terbaru ∨
-        </span>
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="text-xs text-slate-600 border rounded-xl px-2.5 py-1.5 bg-white font-semibold focus:outline-blue-500 cursor-pointer shadow-sm"
+        >
+          <option value="terbaru">Terbaru ∨</option>
+          <option value="az">Nama (A-Z) ∨</option>
+          <option value="harga_rendah">Harga Termurah ∨</option>
+          <option value="harga_tinggi">Harga Termahal ∨</option>
+          <option value="stok">Stok Terbanyak ∨</option>
+        </select>
       </div>
 
-      {/* Item List */}
+      {/* Daftar Produk Sesuai Kategori */}
       <div className="space-y-3">
-        {filteredItems.map((item) => (
+        {sortedItems.map((item) => (
           <div
             key={item.id}
             onClick={() => handleOpenEdit(item)}
             className="bg-white p-3.5 rounded-2xl border border-slate-100 flex justify-between items-center cursor-pointer hover:border-blue-400 transition shadow-sm"
           >
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-xl font-bold">
+              <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-xl font-bold">
                 📦
               </div>
               <div>
@@ -162,15 +206,20 @@ export default function BarangTab() {
               </div>
             </div>
             <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-center">
-              <p className="text-[10px] text-slate-400 font-medium">Stok</p>
               <span className="text-xs font-extrabold text-slate-700">{item.stock}</span>
             </div>
           </div>
         ))}
 
-        {filteredItems.length === 0 && (
-          <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs">
-            Tidak ada barang di kategori <strong>"{selectedCategory}"</strong>
+        {sortedItems.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs space-y-2">
+            <p>Tidak ada barang di kategori <strong>"{selectedCategory}"</strong></p>
+            <button
+              onClick={handleOpenAddNew}
+              className="text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-xl hover:bg-blue-100"
+            >
+              + Tambah Barang di Kategori Ini
+            </button>
           </div>
         )}
       </div>
@@ -178,7 +227,7 @@ export default function BarangTab() {
       {/* Floating Add (+ Baru) Button */}
       <button
         onClick={handleOpenAddNew}
-        className="fixed bottom-20 right-4 max-w-md bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition"
+        className="fixed bottom-20 right-4 max-w-md bg-blue-600 text-white p-4 rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition border-2 border-white"
         title="Tambah Barang Baru"
       >
         <Plus className="w-6 h-6" />
@@ -188,7 +237,6 @@ export default function BarangTab() {
       {editingItem && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom shadow-2xl">
-            {/* Header Modal */}
             <div className="flex justify-between items-center border-b pb-3">
               <div className="flex items-center gap-2">
                 <span className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">📦</span>
@@ -215,7 +263,6 @@ export default function BarangTab() {
               </div>
             </div>
 
-            {/* Form Fields Interaktif */}
             <div className="space-y-3 text-xs">
               <div>
                 <label className="block text-slate-600 font-bold mb-1">Nama Barang *</label>
@@ -339,12 +386,37 @@ export default function BarangTab() {
               </div>
             </div>
 
-            {/* Tombol Simpan */}
             <button
               onClick={handleSave}
               className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 active:scale-95 shadow-md mt-4 transition"
             >
               Simpan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Scanner Barcode Kamera */}
+      {showScanner && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in zoom-in-95">
+          <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center relative border border-slate-700">
+            <button
+              onClick={() => setShowScanModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h3 className="font-bold text-base flex items-center justify-center gap-2">
+              <Camera className="w-5 h-5 text-blue-400" /> Scanner Barcode Kamera
+            </h3>
+            <div className="w-full h-40 bg-slate-950 rounded-2xl flex items-center justify-center border-2 border-dashed border-blue-500/50">
+              <span className="text-xs text-blue-400 font-mono">ARAHKAN BARCODE DI SINI</span>
+            </div>
+            <button
+              onClick={() => setShowScanModal(false)}
+              className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-xs"
+            >
+              Tutup Scanner
             </button>
           </div>
         </div>
