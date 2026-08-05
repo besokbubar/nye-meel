@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
-import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle } from "lucide-react";
+import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function BarangTab() {
-  // 1. Master Data Kategori
+  // 1. Master State Kategori (Singkron Real-time)
   const [categories, setCategories] = useState([
     "Semua",
     "Lainnya",
@@ -13,7 +13,7 @@ export default function BarangTab() {
     "Sembako",
   ]);
 
-  // 2. Master Data Barang
+  // 2. Master State Barang
   const [items, setItems] = useState([
     { id: 1, name: "Ceker Ayam Pedas", barcode: "", price: 10000, buyPrice: 7000, discount: 0, category: "Makanan", stock: 100, minStock: 10, sku: "190420260155" },
     { id: 2, name: "Indomie Goreng", barcode: "899886620011", price: 3500, buyPrice: 2800, discount: 0, category: "Makanan", stock: 120, minStock: 20, sku: "190420260162" },
@@ -22,28 +22,34 @@ export default function BarangTab() {
     { id: 5, name: "Kecap Manis ABC v3", barcode: "899080076078", price: 7500, buyPrice: 5500, discount: 0, category: "Sembako", stock: 96, minStock: 10, sku: "190420260159" },
   ]);
 
-  // States
+  // States Filter & Sorting
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("terbaru");
 
-  // Modal Item Form
+  // States Modal Barang
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  // Modal Kelola Kategori Form
+  // States Modal Kategori
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCatIndex, setEditingCatIndex] = useState(null);
   const [editCatValue, setEditCatValue] = useState("");
 
-  // Custom Pop Up Confirm Dialog State
-  const [confirmDeleteConfig, setConfirmDeleteConfig] = useState(null); // { title, message, onConfirm }
+  // States Custom Pop-Up Confirm Delete & Toast
+  const [confirmDeleteConfig, setConfirmDeleteConfig] = useState(null);
+  const [toastMessage, setToastMessage] = useState("");
 
   const [showScanner, setShowScanModal] = useState(false);
   const categoryContainerRef = useRef(null);
 
-  // LOGIKA FILTER
+  const showNotification = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  // LOGIKA FILTERING DINAMIS
   const filteredItems = items.filter((item) => {
     const matchCategory =
       selectedCategory === "Semua" ||
@@ -57,7 +63,7 @@ export default function BarangTab() {
     return matchCategory && matchSearch;
   });
 
-  // LOGIKA SORTING
+  // LOGIKA SORTING DINAMIS
   const sortedItems = [...filteredItems].sort((a, b) => {
     if (sortBy === "az") return a.name.localeCompare(b.name);
     if (sortBy === "harga_rendah") return a.price - b.price;
@@ -73,74 +79,96 @@ export default function BarangTab() {
     }
   };
 
-  // --- KELOLA KATEGORI HANDLERS ---
+  // --- HANDLER TAMBAH KATEGORI BARU ---
   const handleAddCategory = () => {
-    if (!newCatName.trim()) return;
-    if (categories.some((c) => c.toLowerCase() === newCatName.trim().toLowerCase())) {
-      alert("Kategori sudah ada!");
+    const trimmed = newCatName.trim();
+    if (!trimmed) return;
+
+    if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      showNotification(`Kategori '${trimmed}' sudah ada!`);
       return;
     }
-    setCategories([...categories, newCatName.trim()]);
-    setSelectedCategory(newCatName.trim());
+
+    setCategories((prev) => [...prev, trimmed]);
+    setSelectedCategory(trimmed);
     setNewCatName("");
+    showNotification(`Kategori '${trimmed}' berhasil ditambahkan!`);
   };
 
+  // --- HANDLER EDIT NAMA KATEGORI ---
   const handleUpdateCategory = (index) => {
-    if (!editCatValue.trim()) return;
+    const trimmed = editCatValue.trim();
+    if (!trimmed) return;
+
     const oldName = categories[index];
-    const newName = editCatValue.trim();
 
-    const updated = [...categories];
-    updated[index] = newName;
-    setCategories(updated);
+    setCategories((prev) => {
+      const next = [...prev];
+      next[index] = trimmed;
+      return next;
+    });
 
+    // Update kategori pada semua barang yang menggunakan nama lama
     setItems((prev) =>
       prev.map((item) =>
-        item.category === oldName ? { ...item, category: newName } : item
+        item.category === oldName ? { ...item, category: trimmed } : item
       )
     );
 
-    if (selectedCategory === oldName) setSelectedCategory(newName);
+    if (selectedCategory === oldName) setSelectedCategory(trimmed);
     setEditingCatIndex(null);
     setEditCatValue("");
+    showNotification(`Kategori diubah dari '${oldName}' menjadi '${trimmed}'`);
   };
 
+  // --- HANDLER HAPUS KATEGORI (SEKIAN SERTA MENGHAPUS DARI MASTER STATE) ---
   const requestDeleteCategory = (catToDelete) => {
     if (catToDelete === "Semua") {
-      alert("Kategori 'Semua' tidak dapat dihapus!");
+      showNotification("Kategori 'Semua' tidak dapat dihapus!");
       return;
     }
 
-    // Panggil Pop Up Custom
     setConfirmDeleteConfig({
       title: "Hapus Kategori",
-      message: `Hapus kategori '${catToDelete}'? Barang di dalamnya akan otomatis diubah ke kategori 'Lainnya'.`,
+      message: `Apakah Anda yakin ingin menghapus kategori '${catToDelete}'? Barang yang berada di kategori ini akan dipindahkan ke kategori 'Lainnya'.`,
       onConfirm: () => {
-        setCategories(categories.filter((c) => c !== catToDelete));
+        // 1. Hapus dari state master categories
+        setCategories((prev) => prev.filter((c) => c !== catToDelete));
+
+        // 2. Pindahkan semua barang kategori ini ke 'Lainnya'
         setItems((prev) =>
           prev.map((item) =>
             item.category === catToDelete ? { ...item, category: "Lainnya" } : item
           )
         );
-        if (selectedCategory === catToDelete) setSelectedCategory("Semua");
+
+        // 3. Jika kategori yang dihapus sedang dipilih, kembalikan filter ke 'Semua'
+        if (selectedCategory === catToDelete) {
+          setSelectedCategory("Semua");
+        }
+
         setConfirmDeleteConfig(null);
+        showNotification(`Kategori '${catToDelete}' berhasil dihapus!`);
       },
     });
   };
 
-  // --- BARANG HANDLERS ---
+  // --- HANDLERS BARANG ---
   const handleOpenEdit = (item) => {
     setEditingItem(item);
     setFormData({ ...item });
   };
 
   const handleOpenAddNew = () => {
+    const validCatList = categories.filter((c) => c !== "Semua");
+    const defaultCat = validCatList.includes(selectedCategory) ? selectedCategory : "Lainnya";
+
     const newItem = {
       id: Date.now(),
       name: "",
       barcode: "",
       sku: `${Date.now()}`.slice(-12),
-      category: selectedCategory === "Semua" ? "Lainnya" : selectedCategory,
+      category: defaultCat,
       buyPrice: 0,
       price: 0,
       discount: 0,
@@ -166,22 +194,32 @@ export default function BarangTab() {
     });
 
     setEditingItem(null);
+    showNotification("Data barang berhasil disimpan!");
   };
 
   const requestDeleteItem = (id) => {
     setConfirmDeleteConfig({
       title: "Hapus Barang",
-      message: "Apakah Anda yakin ingin menghapus barang ini dari daftar inventaris?",
+      message: "Apakah Anda yakin ingin menghapus barang ini dari inventaris?",
       onConfirm: () => {
         setItems((prev) => prev.filter((i) => i.id !== id));
         setEditingItem(null);
         setConfirmDeleteConfig(null);
+        showNotification("Barang berhasil dihapus!");
       },
     });
   };
 
   return (
     <div className="space-y-4">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-[#FFC72C] px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 border border-[#FFC72C]/30 animate-in slide-in-from-top-4">
+          <CheckCircle className="w-4 h-4 text-[#FFC72C]" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="relative flex items-center gap-2">
         <div className="relative flex-1">
@@ -203,7 +241,7 @@ export default function BarangTab() {
         </div>
       </div>
 
-      {/* Filter Kategori Bar & Tombol Tambah Kategori (Warna Kuning #FFC72C) */}
+      {/* Filter Kategori Bar + Tombol Tambah Kategori */}
       <div className="space-y-2">
         <div className="relative flex items-center bg-amber-100/60 rounded-2xl p-1 border border-amber-200 gap-1">
           <button
@@ -239,7 +277,6 @@ export default function BarangTab() {
             <ChevronRight className="w-4 h-4" />
           </button>
 
-          {/* Tombol Utama Tambah & Kelola Kategori */}
           <button
             onClick={() => setShowCategoryModal(true)}
             className="px-2.5 py-1.5 bg-[#FFC72C] text-slate-900 hover:bg-amber-400 rounded-xl transition shrink-0 flex items-center gap-1 text-xs font-bold shadow-sm"
@@ -331,7 +368,7 @@ export default function BarangTab() {
         <Plus className="w-6 h-6" />
       </button>
 
-      {/* MODAL 1: KELOLA KATEGORI */}
+      {/* MODAL KELOLA KATEGORI */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in zoom-in-95 shadow-2xl">
@@ -345,7 +382,7 @@ export default function BarangTab() {
               </button>
             </div>
 
-            {/* Input Tambah Kategori Baru */}
+            {/* Input Tambah Kategori */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-600">Tambah Kategori Baru:</label>
               <div className="flex gap-2">
@@ -365,9 +402,9 @@ export default function BarangTab() {
               </div>
             </div>
 
-            {/* Daftar Kategori */}
+            {/* Daftar Kategori Real-Time */}
             <div className="space-y-2 pt-2 border-t">
-              <p className="text-[11px] font-bold text-slate-400 uppercase">Daftar Kategori Saat Ini:</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase">Daftar Kategori Saat Ini ({categories.length}):</p>
               {categories.map((cat, idx) => (
                 <div key={cat} className="flex justify-between items-center p-2.5 bg-slate-50 border rounded-xl text-xs">
                   {editingCatIndex === idx ? (
@@ -403,7 +440,7 @@ export default function BarangTab() {
                               setEditCatValue(cat);
                             }}
                             className="p-1 text-slate-400 hover:text-amber-600"
-                            title="Edit Nama"
+                            title="Edit Nama Kategori"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -432,7 +469,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL 2: EDIT / TAMBAH BARANG */}
+      {/* MODAL EDIT / TAMBAH BARANG */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom shadow-2xl">
@@ -498,6 +535,7 @@ export default function BarangTab() {
 
               <div>
                 <label className="block text-slate-600 font-bold mb-1">Kategori *</label>
+                {/* Dropdown Kategori Selalu Singkron dengan List Kategori Terbaru */}
                 <select
                   value={formData.category || "Lainnya"}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -593,7 +631,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL 3: SCANNER BARCODE */}
+      {/* MODAL SCANNER BARCODE */}
       {showScanner && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in zoom-in-95">
           <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center relative border border-slate-700">
@@ -613,7 +651,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* 4. MODAL CUSTOM POP UP CONFIRM DELETE (GANTIKAN ALERT BROWSER) */}
+      {/* MODAL CUSTOM CONFIRM DELETE */}
       {confirmDeleteConfig && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl animate-in zoom-in-95">
