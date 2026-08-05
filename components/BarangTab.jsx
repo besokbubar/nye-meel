@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle, CheckCircle, Printer } from "lucide-react";
+import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle, CheckCircle, Printer, RefreshCw } from "lucide-react";
 
 export default function BarangTab({ items = [], setItems }) {
   const [categories, setCategories] = useState([
@@ -34,6 +34,18 @@ export default function BarangTab({ items = [], setItems }) {
   const showNotification = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  // FUNGSI OTO-GENERATE SKU & BARCODE UNIK
+  const generateAutoCode = () => {
+    const randomSkuNum = Math.floor(10000000 + Math.random() * 90000000);
+    const autoSku = `SKU-${randomSkuNum}`;
+    
+    // Barcode standar Indonesia (899 + 9 digit acak)
+    const randomBarcodeNum = Math.floor(100000000 + Math.random() * 900000000);
+    const autoBarcode = `899${randomBarcodeNum}`;
+
+    return { autoSku, autoBarcode };
   };
 
   const filteredItems = items.filter((item) => {
@@ -128,15 +140,18 @@ export default function BarangTab({ items = [], setItems }) {
     setFormData({ ...item });
   };
 
+  // TAMBAH BARANG BARU (AUTO SKU & BARCODE DI-GENERATE DISINI)
   const handleOpenAddNew = () => {
     const validCatList = categories.filter((c) => c !== "Semua");
     const defaultCat = validCatList.includes(selectedCategory) ? selectedCategory : "Lainnya";
 
+    const { autoSku, autoBarcode } = generateAutoCode();
+
     const newItem = {
       id: Date.now(),
       name: "",
-      barcode: "",
-      sku: `${Date.now()}`.slice(-12),
+      barcode: autoBarcode,
+      sku: autoSku,
       category: defaultCat,
       buyPrice: 0,
       price: 0,
@@ -146,6 +161,17 @@ export default function BarangTab({ items = [], setItems }) {
     };
     setEditingItem(newItem);
     setFormData(newItem);
+  };
+
+  // REFRESH ULANG NOMOR KODE KHUSUS PADA BARANG BARU
+  const handleRefreshAutoCodes = () => {
+    const { autoSku, autoBarcode } = generateAutoCode();
+    setFormData((prev) => ({
+      ...prev,
+      sku: autoSku,
+      barcode: autoBarcode,
+    }));
+    showNotification("Nomor SKU & Barcode baru berhasil dibuat!");
   };
 
   const handleSave = () => {
@@ -471,34 +497,48 @@ export default function BarangTab({ items = [], setItems }) {
                 />
               </div>
 
+              {/* SKU & BARCODE AUTO-GENERATED & READ ONLY */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-bold mb-1">SKU (Otomatis) *</label>
+                  <label className="block text-slate-600 font-bold mb-1">SKU (Otomatis) 🔒</label>
                   <input
                     type="text"
                     value={formData.sku || ""}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-500 font-medium"
+                    readOnly
+                    className="w-full border border-slate-200 rounded-xl p-3 bg-slate-100 text-slate-500 font-mono font-bold cursor-not-allowed select-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-bold mb-1">Barcode</label>
+                  <label className="block text-slate-600 font-bold mb-1">Barcode (Otomatis) 🔒</label>
                   <div className="relative">
                     <input
                       type="text"
                       value={formData.barcode || ""}
-                      onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                      placeholder="Contoh: 899080..."
-                      className="w-full border border-slate-200 rounded-xl p-3 pr-9 font-medium focus:outline-[#FFC72C]"
+                      readOnly
+                      className="w-full border border-slate-200 rounded-xl p-3 pr-16 bg-slate-100 text-slate-600 font-mono font-bold cursor-not-allowed select-none"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setPreviewBarcodeItem(formData)}
-                      className="absolute right-2 top-2.5 p-1 bg-amber-100 hover:bg-[#FFC72C] text-amber-800 rounded-lg transition"
-                      title="Lihat Barcode"
-                    >
-                      <QrCode className="w-4 h-4" />
-                    </button>
+                    
+                    <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
+                      {/* Tombol Acak Ulang / Refresh Kode */}
+                      <button
+                        type="button"
+                        onClick={handleRefreshAutoCodes}
+                        className="p-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition"
+                        title="Generate Nomor Baru"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Tombol Preview Barcode */}
+                      <button
+                        type="button"
+                        onClick={() => setPreviewBarcodeItem(formData)}
+                        className="p-1.5 bg-amber-100 hover:bg-[#FFC72C] text-amber-900 rounded-lg transition"
+                        title="Lihat Barcode"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
