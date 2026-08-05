@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode, X, Check, Camera } from "lucide-react";
+import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode, X, Check, Camera, CheckCircle2 } from "lucide-react";
 import PaymentModal from "./PaymentModal";
 import ReceiptModal from "./ReceiptModal";
 
@@ -16,11 +16,20 @@ export default function KasirTab({ catalog = [] }) {
   const [completedTransaction, setCompletedTransaction] = useState(null);
   const [scanMessage, setScanMessage] = useState("");
 
+  // STATE UNTUK TOAST NOTIFICATION KEKINIAN
+  const [toastMessage, setToastMessage] = useState("");
+
+  const triggerToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 2500);
+  };
+
   const filteredCatalog = catalog.filter((prod) =>
     prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (prod.barcode && prod.barcode.includes(searchQuery))
   );
 
+  // TAMBAH KE KERANJANG LENGKAP DENGAN TOAST POPUP
   const addToCart = (product) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
@@ -31,6 +40,9 @@ export default function KasirTab({ catalog = [] }) {
       }
       return [...prev, { id: product.id, name: product.name, price: product.price, qty: 1 }];
     });
+
+    // Panggil Toast Notifikasi Kekinian
+    triggerToast(`🛒 ${product.name} berhasil ditambah ke keranjang!`);
   };
 
   const updateQty = (id, delta) => {
@@ -41,8 +53,14 @@ export default function KasirTab({ catalog = [] }) {
     );
   };
 
-  const removeItem = (id) => {
+  const removeItem = (id, name) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
+    triggerToast(`🗑️ ${name || 'Item'} dihapus dari keranjang!`);
+  };
+
+  const handleClearCart = () => {
+    setItems([]);
+    triggerToast("✨ Keranjang berhasil dikosongkan!");
   };
 
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -55,7 +73,17 @@ export default function KasirTab({ catalog = [] }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {/* TOAST NOTIFICATION KEKINIAN (WARNA KUNING #FFC72C & SLATE-900) */}
+      {toastMessage && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-[#FFC72C] px-4 py-3 rounded-2xl text-xs font-extrabold shadow-2xl flex items-center gap-2.5 border-2 border-[#FFC72C]/40 animate-in slide-in-from-top-4 fade-in backdrop-blur-md">
+          <div className="w-5 h-5 bg-[#FFC72C] text-slate-900 rounded-full flex items-center justify-center font-black">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+          </div>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Search Bar & Plus (+) Button */}
       <div className="relative flex items-center gap-2">
         <div className="relative flex-1">
@@ -88,7 +116,7 @@ export default function KasirTab({ catalog = [] }) {
 
       {/* Dynamic Search Dropdown */}
       {searchQuery && (
-        <div className="bg-white border rounded-2xl p-3 space-y-2 shadow-lg animate-in fade-in max-h-48 overflow-y-auto">
+        <div className="bg-white border border-amber-200 rounded-2xl p-3 space-y-2 shadow-lg animate-in fade-in max-h-48 overflow-y-auto">
           <p className="text-[11px] font-bold text-slate-400 uppercase">Hasil Pencarian:</p>
           {filteredCatalog.length > 0 ? (
             filteredCatalog.map((prod) => (
@@ -104,9 +132,9 @@ export default function KasirTab({ catalog = [] }) {
                   <p className="text-xs font-bold text-slate-800">{prod.name}</p>
                   <p className="text-[10px] text-slate-400">Rp {prod.price.toLocaleString()}</p>
                 </div>
-                <span className="text-xs font-bold text-amber-800 bg-[#FFC72C] px-2.5 py-1 rounded-lg">
+                <button className="text-xs font-bold text-slate-900 bg-[#FFC72C] hover:bg-amber-400 px-3 py-1 rounded-xl shadow-sm active:scale-95 transition">
                   + Tambah
-                </span>
+                </button>
               </div>
             ))
           ) : (
@@ -119,7 +147,7 @@ export default function KasirTab({ catalog = [] }) {
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-slate-700 text-base">Keranjang</h2>
         {items.length > 0 && (
-          <button onClick={() => setItems([])} className="text-xs text-red-500 font-semibold hover:underline">
+          <button onClick={handleClearCart} className="text-xs text-red-500 font-semibold hover:underline">
             Hapus Semua
           </button>
         )}
@@ -134,7 +162,7 @@ export default function KasirTab({ catalog = [] }) {
               <p className="font-extrabold text-amber-700 text-sm mt-1">Rp {(item.price * item.qty).toLocaleString()}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => removeItem(item.id)} className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg">
+              <button onClick={() => removeItem(item.id, item.name)} className="p-1.5 text-slate-300 hover:text-red-500 rounded-lg">
                 <Trash2 className="w-4 h-4" />
               </button>
               <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50">
@@ -196,7 +224,7 @@ export default function KasirTab({ catalog = [] }) {
                   </div>
                   <button
                     onClick={() => addToCart(prod)}
-                    className="flex items-center gap-1 bg-[#FFC72C] text-slate-900 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-amber-400 active:scale-95 transition shadow-sm"
+                    className="flex items-center gap-1 bg-[#FFC72C] text-slate-900 px-3.5 py-1.5 rounded-xl text-xs font-extrabold hover:bg-amber-400 active:scale-90 transition shadow-sm"
                   >
                     <Plus className="w-3.5 h-3.5" /> Tambah
                   </button>
@@ -305,6 +333,7 @@ export default function KasirTab({ catalog = [] }) {
             setShowPayment(false);
             setShowReceipt(true);
             setItems([]);
+            triggerToast("✅ Transaksi berhasil diproses!");
           }}
         />
       )}
