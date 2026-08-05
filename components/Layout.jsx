@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Store, Package, BookOpen, BarChart3, Bell, Menu, X, Settings, User, HelpCircle, LogOut } from "lucide-react";
+import { Store, Package, BookOpen, BarChart3, Menu, X, Settings, User, HelpCircle, LogOut } from "lucide-react";
 
 export default function Layout({ children, activeTab, setActiveTab }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -23,28 +23,48 @@ export default function Layout({ children, activeTab, setActiveTab }) {
             <p className="text-[10px] text-slate-400 mt-0.5">Toko Nyemeel Utama</p>
           </div>
         </div>
-        <button 
-          onClick={() => setShowMenu(true)} 
-          className="p-2 rounded-xl text-slate-700 hover:bg-amber-50 transition"
-        >
+        <button onClick={() => setShowMenu(true)} className="p-2 rounded-xl text-slate-700 hover:bg-amber-50 transition">
           <Menu className="w-6 h-6 text-slate-800" />
         </button>
       </header>
 
       <main className="p-4">{children}</main>
 
+      {showMenu && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex justify-end backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-4/5 max-w-xs h-full p-5 space-y-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right">
+            <div className="space-y-5">
+              <div className="flex justify-between items-center border-b pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#FFC72C] text-slate-900 font-extrabold rounded-xl flex items-center justify-center">K</div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-800">Kasir Warung</h3>
+                    <p className="text-xs text-slate-400">v1.2.0 (Pro)</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowMenu(false)} className="p-1 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+              </div>
+
+              <div className="space-y-1">
+                <button onClick={() => { alert("Pengaturan Toko"); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-amber-50"><User className="w-4 h-4" /> Pengaturan Toko</button>
+                <button onClick={() => { alert("Pengaturan Struk"); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-amber-50"><Settings className="w-4 h-4" /> Pengaturan Struk & Printer</button>
+                <button onClick={() => { alert("Bantuan"); setShowMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-amber-50"><HelpCircle className="w-4 h-4" /> Bantuan & Bimbingan</button>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <button onClick={() => setShowMenu(false)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50"><LogOut className="w-4 h-4" /> Keluar Sesi</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t flex justify-around py-2 px-1 z-20">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center py-1.5 px-3 rounded-xl text-xs font-bold transition-all ${
-                isActive ? "text-slate-900 bg-[#FFC72C]" : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col items-center py-1.5 px-3 rounded-xl text-xs font-bold transition-all ${isActive ? "text-slate-900 bg-[#FFC72C]" : "text-slate-400 hover:text-slate-600"}`}>
               <Icon className="w-5 h-5 mb-1" />
               {tab.label}
             </button>
