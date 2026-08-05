@@ -1,8 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Search, Plus, QrCode, Trash2, X, ChevronLeft, ChevronRight, Camera, FolderPlus, Edit2, AlertTriangle, CheckCircle, Printer } from "lucide-react";
 
-export default function BarangTab() {
-  // 1. Master State Kategori
+export default function BarangTab({ items = [], setItems }) {
   const [categories, setCategories] = useState([
     "Semua",
     "Lainnya",
@@ -13,34 +12,19 @@ export default function BarangTab() {
     "Sembako",
   ]);
 
-  // 2. Master State Barang
-  const [items, setItems] = useState([
-    { id: 1, name: "Ceker Ayam Pedas", barcode: "", price: 10000, buyPrice: 7000, discount: 0, category: "Makanan", stock: 100, minStock: 10, sku: "190420260155" },
-    { id: 2, name: "Indomie Goreng", barcode: "899886620011", price: 3500, buyPrice: 2800, discount: 0, category: "Makanan", stock: 120, minStock: 20, sku: "190420260162" },
-    { id: 3, name: "Aqua 1.5L", barcode: "899043057811", price: 18000, buyPrice: 14000, discount: 0, category: "Minuman", stock: 42, minStock: 10, sku: "190420260161" },
-    { id: 4, name: "Bawang Goreng", barcode: "899214611863", price: 17500, buyPrice: 12000, discount: 0, category: "Lainnya", stock: 68, minStock: 5, sku: "190420260160" },
-    { id: 5, name: "Kecap Manis ABC v3", barcode: "899080076078", price: 7500, buyPrice: 5500, discount: 0, category: "Sembako", stock: 96, minStock: 10, sku: "190420260159" },
-  ]);
-
-  // States Filter & Search
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("terbaru");
 
-  // Modal Barang Form
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  // Modal Kelola Kategori
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [editingCatIndex, setEditingCatIndex] = useState(null);
   const [editCatValue, setEditCatValue] = useState("");
 
-  // Modal Preview Cetak Stiker Barcode Produk
   const [previewBarcodeItem, setPreviewBarcodeItem] = useState(null);
-
-  // Custom Pop Up & Toast
   const [confirmDeleteConfig, setConfirmDeleteConfig] = useState(null);
   const [toastMessage, setToastMessage] = useState("");
   const [showScanner, setShowScanModal] = useState(false);
@@ -52,7 +36,6 @@ export default function BarangTab() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // LOGIKA FILTERING
   const filteredItems = items.filter((item) => {
     const matchCategory =
       selectedCategory === "Semua" ||
@@ -60,13 +43,12 @@ export default function BarangTab() {
 
     const matchSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.barcode.includes(searchQuery) ||
-      item.sku.includes(searchQuery);
+      (item.barcode && item.barcode.includes(searchQuery)) ||
+      (item.sku && item.sku.includes(searchQuery));
 
     return matchCategory && matchSearch;
   });
 
-  // LOGIKA SORTING
   const sortedItems = [...filteredItems].sort((a, b) => {
     if (sortBy === "az") return a.name.localeCompare(b.name);
     if (sortBy === "harga_rendah") return a.price - b.price;
@@ -82,7 +64,6 @@ export default function BarangTab() {
     }
   };
 
-  // KATEGORI HANDLERS
   const handleAddCategory = () => {
     const trimmed = newCatName.trim();
     if (!trimmed) return;
@@ -142,7 +123,6 @@ export default function BarangTab() {
     });
   };
 
-  // ITEM HANDLERS
   const handleOpenEdit = (item) => {
     setEditingItem(item);
     setFormData({ ...item });
@@ -183,7 +163,7 @@ export default function BarangTab() {
     });
 
     setEditingItem(null);
-    showNotification("Data barang berhasil disimpan!");
+    showNotification("Data barang berhasil disimpan & tersambung ke Kasir!");
   };
 
   const requestDeleteItem = (id) => {
@@ -201,7 +181,6 @@ export default function BarangTab() {
 
   return (
     <div className="space-y-4">
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-[#FFC72C] px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 border border-[#FFC72C]/30 animate-in slide-in-from-top-4">
           <CheckCircle className="w-4 h-4 text-[#FFC72C]" />
@@ -310,8 +289,6 @@ export default function BarangTab() {
               </div>
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">{item.name}</h3>
-                
-                {/* NOMOR BARCODE TERAMBIL SECARA DINAMIS DARI EDIT BARANG */}
                 {item.barcode ? (
                   <p className="text-[11px] text-slate-400 font-mono tracking-wider">{item.barcode}</p>
                 ) : (
@@ -358,7 +335,7 @@ export default function BarangTab() {
         <Plus className="w-6 h-6" />
       </button>
 
-      {/* MODAL KELOLA KATEGORI */}
+      {/* Modal Kelola Kategori */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in zoom-in-95 shadow-2xl">
@@ -455,7 +432,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL EDIT / TAMBAH BARANG */}
+      {/* Modal Edit/Tambah Barang */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom shadow-2xl">
@@ -514,13 +491,11 @@ export default function BarangTab() {
                       placeholder="Contoh: 899080..."
                       className="w-full border border-slate-200 rounded-xl p-3 pr-9 font-medium focus:outline-[#FFC72C]"
                     />
-                    
-                    {/* KLIK ICON QR UNTUK CETAK STIKER BARCODE */}
                     <button
                       type="button"
                       onClick={() => setPreviewBarcodeItem(formData)}
                       className="absolute right-2 top-2.5 p-1 bg-amber-100 hover:bg-[#FFC72C] text-amber-800 rounded-lg transition"
-                      title="Lihat & Cetak Barcode Produk"
+                      title="Lihat Barcode"
                     >
                       <QrCode className="w-4 h-4" />
                     </button>
@@ -625,7 +600,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL FITUR BARU: PREVIEW & CETAK STIKER BARCODE */}
+      {/* Modal Preview Stiker Barcode */}
       {previewBarcodeItem && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in zoom-in-95">
           <div className="bg-white w-full max-w-xs rounded-3xl p-5 text-center space-y-4 shadow-2xl relative">
@@ -638,13 +613,11 @@ export default function BarangTab() {
 
             <h3 className="font-extrabold text-slate-800 text-sm">Stiker Barcode Produk</h3>
 
-            {/* Simulasi Gambar Barcode Fisik */}
             <div className="p-4 border-2 border-dashed border-slate-200 rounded-2xl bg-amber-50/40 space-y-2 font-mono">
               <p className="font-extrabold font-sans text-xs text-slate-800 truncate">
                 {previewBarcodeItem.name || "Nama Produk"}
               </p>
               
-              {/* Garis-Garis Barcode */}
               <div className="h-14 bg-white p-2 border flex items-center justify-center space-x-1 overflow-hidden">
                 {[2,1,3,1,2,4,1,2,1,3,2,1,4,1,2,3,1,2,1,3].map((w, i) => (
                   <span
@@ -676,7 +649,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL SCANNER BARCODE */}
+      {/* Modal Scanner Barcode */}
       {showScanner && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in zoom-in-95">
           <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center relative border border-slate-700">
@@ -696,7 +669,7 @@ export default function BarangTab() {
         </div>
       )}
 
-      {/* MODAL CUSTOM CONFIRM DELETE */}
+      {/* Modal Custom Confirm Delete */}
       {confirmDeleteConfig && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl animate-in zoom-in-95">
