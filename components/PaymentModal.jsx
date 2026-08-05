@@ -1,18 +1,19 @@
 import React, { useState } from "react";
-import { X, Delete, Edit2 } from "lucide-react";
+import { X, Delete, Edit2, Check } from "lucide-react";
 
 export default function PaymentModal({ total, onClose, onSuccess }) {
   const [discount, setDiscount] = useState(3500);
-  const [editingDiscount, setEditingDiscount] = useState(false);
-  const [discountInput, setDiscountInput] = useState("3500");
+  const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+  const [tempDiscount, setTempDiscount] = useState("3500");
 
   const finalTotal = Math.max(0, total - discount);
-  const [payAmount, setPayAmount] = useState("0");
+  const [payAmount, setPayAmount] = useState("100000");
   const currentPay = parseInt(payAmount || "0");
 
-  // RUMUS PERHITUNGAN AKURAT
-  const isInsufficient = currentPay < finalTotal;
-  const change = currentPay >= finalTotal ? currentPay - finalTotal : 0;
+  // LOGIKA HUTANG ATAU KEMBALI
+  const isDebt = currentPay < finalTotal;
+  const debtAmount = isDebt ? finalTotal - currentPay : 0;
+  const changeAmount = !isDebt ? currentPay - finalTotal : 0;
 
   const handleNumpad = (val) => {
     if (val === "DEL") {
@@ -25,14 +26,15 @@ export default function PaymentModal({ total, onClose, onSuccess }) {
   };
 
   const handleSaveDiscount = () => {
-    const val = parseInt(discountInput || "0");
-    setDiscount(val);
-    setEditingDiscount(false);
+    const parsed = parseInt(tempDiscount || "0");
+    setDiscount(parsed);
+    setIsEditingDiscount(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 animate-in slide-in-from-bottom">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
+      <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 animate-in slide-in-from-bottom shadow-2xl">
+        {/* Header */}
         <div className="flex justify-between items-center border-b pb-3">
           <div className="flex items-center gap-2">
             <span className="p-1.5 bg-blue-100 text-blue-600 rounded-lg text-sm">💵</span>
@@ -43,21 +45,43 @@ export default function PaymentModal({ total, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Financial Breakdown */}
+        {/* Ringkasan Hitungan */}
         <div className="bg-slate-50 p-4 rounded-2xl space-y-2 border border-slate-100 text-xs">
           <div className="flex justify-between text-slate-500 font-medium">
             <span>Total Tagihan</span>
             <span className="font-bold">Rp {total.toLocaleString()}</span>
           </div>
 
+          {/* Inline Edit Diskon */}
           <div className="flex justify-between text-red-500 font-medium items-center">
             <button
-              onClick={() => setEditingDiscount(true)}
-              className="flex items-center gap-1 text-red-500 hover:underline font-semibold"
+              onClick={() => setIsEditingDiscount(!isEditingDiscount)}
+              className="flex items-center gap-1.5 text-red-500 font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-lg border border-red-200"
             >
-              Diskon <Edit2 className="w-3 h-3" />
+              <span>Diskon</span>
+              <Edit2 className="w-3 h-3" />
             </button>
-            <span>- Rp {discount.toLocaleString()}</span>
+
+            {isEditingDiscount ? (
+              <div className="flex items-center gap-1">
+                <span className="text-slate-400 text-[10px]">Rp</span>
+                <input
+                  type="number"
+                  value={tempDiscount}
+                  onChange={(e) => setTempDiscount(e.target.value)}
+                  className="w-20 px-2 py-0.5 text-xs border border-red-300 rounded-lg font-bold text-red-600 bg-white focus:outline-red-500"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSaveDiscount}
+                  className="p-1 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  <Check className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <span>- Rp {discount.toLocaleString()}</span>
+            )}
           </div>
 
           <div className="flex justify-between font-bold text-blue-600 text-sm pt-2 border-t border-slate-200">
@@ -67,39 +91,19 @@ export default function PaymentModal({ total, onClose, onSuccess }) {
 
           <div className="flex justify-between text-slate-700 font-semibold pt-1">
             <span>Bayar</span>
-            <span className={`font-bold ${isInsufficient && currentPay > 0 ? "text-amber-600" : "text-slate-800"}`}>
-              Rp {currentPay.toLocaleString()}
-            </span>
+            <span>Rp {currentPay.toLocaleString()}</span>
           </div>
 
-          <div className="flex justify-between font-bold text-emerald-600 text-sm pt-1">
-            <span>Kembali</span>
-            <span className={change > 0 ? "text-emerald-600 font-bold" : "text-slate-400"}>
-              Rp {change.toLocaleString()}
+          {/* Dinamis: Kembali atau Hutang */}
+          <div className="flex justify-between font-bold text-sm pt-1">
+            <span>{isDebt ? "Hutang" : "Kembali"}</span>
+            <span className={isDebt ? "text-red-600 font-bold" : "text-emerald-600 font-bold"}>
+              Rp {(isDebt ? debtAmount : changeAmount).toLocaleString()}
             </span>
           </div>
         </div>
 
-        {/* Edit Diskon Popup Form */}
-        {editingDiscount && (
-          <div className="flex gap-2 items-center bg-red-50 p-2.5 rounded-xl border border-red-200">
-            <span className="text-xs font-bold text-red-600">Ubah Diskon (Rp):</span>
-            <input
-              type="number"
-              value={discountInput}
-              onChange={(e) => setDiscountInput(e.target.value)}
-              className="w-28 px-2 py-1 text-xs border rounded-lg font-bold"
-            />
-            <button
-              onClick={handleSaveDiscount}
-              className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700"
-            >
-              Simpan
-            </button>
-          </div>
-        )}
-
-        {/* Input Display Box */}
+        {/* Display Nominal Input */}
         <div className="flex justify-between items-center bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-inner">
           <span className="text-slate-400 font-bold text-sm">Rp</span>
           <span className="font-bold text-xl text-slate-800">
@@ -110,11 +114,11 @@ export default function PaymentModal({ total, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Tombol Preset & Uang Pas */}
+        {/* Preset Quick Nominal */}
         <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => setPayAmount(finalTotal.toString())}
-            className="py-2.5 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 shadow-sm transition"
+            className="py-2.5 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 transition shadow-sm"
           >
             Uang Pas
           </button>
@@ -129,7 +133,7 @@ export default function PaymentModal({ total, onClose, onSuccess }) {
           ))}
         </div>
 
-        {/* Keypad Numpad */}
+        {/* Numpad */}
         <div className="grid grid-cols-3 gap-2">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9", "000", "0"].map((num) => (
             <button
@@ -148,26 +152,23 @@ export default function PaymentModal({ total, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Action Buttons */}
+        {/* Tombol Konfirmasi */}
         <div className="flex gap-3 pt-2">
           <button onClick={onClose} className="w-1/3 py-3 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">
             Kembali
           </button>
           <button
             onClick={() => {
-              if (isInsufficient) {
-                alert(`Uang pembayaran kurang! Masih kurang Rp ${(finalTotal - currentPay).toLocaleString()}`);
-                return;
-              }
               onSuccess({
                 discount,
                 finalTotal,
                 payAmount: currentPay,
-                change,
+                isDebt,
+                debtAmount,
+                changeAmount,
               });
             }}
-            disabled={currentPay === 0}
-            className="w-2/3 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 shadow-md disabled:opacity-50 transition"
+            className="w-2/3 py-3 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 shadow-md transition"
           >
             Konfirmasi
           </button>
