@@ -2,30 +2,36 @@ import React from "react";
 import { CheckCircle2, X, Share2, Printer } from "lucide-react";
 
 export default function ReceiptModal({ transaction, onClose }) {
+  // Ambil data transaksi langsung dari modal Uang Diterima
   const data = transaction || {
     items: [
       { name: "Teh Kotak 300ml", price: 4500, qty: 4 },
       { name: "Magnum Blue", price: 11000, qty: 2 },
       { name: "Aqua 1.5L", price: 18000, qty: 1 },
     ],
-    total: 112000,
+    total: 58000,
     discount: 3500,
-    finalTotal: 108500,
+    finalTotal: 54500,
     payAmount: 100000,
-    isDebt: true,
-    debtAmount: 8500,
-    changeAmount: 0,
+    isDebt: false,
+    debtAmount: 0,
+    changeAmount: 45500,
   };
 
   const handleSendWA = () => {
-    const statusStr = data.isDebt ? `Hutang: Rp ${data.debtAmount.toLocaleString()}` : `Kembali: Rp ${data.changeAmount.toLocaleString()}`;
-    const text = `*KASIR WARUNG*\nJl. A Yani No. 13, Kota Langsa, Aceh\nID: INV-020526-0002\n--------------------------\nTotal Akhir: Rp ${data.finalTotal.toLocaleString()}\nDibayar: Rp ${data.payAmount.toLocaleString()}\n${statusStr}\n\nTerima kasih telah berbelanja!`;
+    const statusText = data.isDebt
+      ? `Hutang: Rp ${data.debtAmount.toLocaleString()}`
+      : `Kembali: Rp ${data.changeAmount.toLocaleString()}`;
+
+    const text = `*KASIR WARUNG*\nJl. A Yani No. 13, Kota Langsa, Aceh\nID Transaksi: INV-060826-0002\n--------------------------\nSubtotal: Rp ${data.total.toLocaleString()}\nDiskon: -Rp ${data.discount.toLocaleString()}\nTotal Akhir: Rp ${data.finalTotal.toLocaleString()}\nDibayar: Rp ${data.payAmount.toLocaleString()}\n${statusText}\n\nTerima kasih telah berbelanja!`;
+    
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 shadow-2xl">
+        
         {/* Header Title */}
         <div className="flex justify-between items-center border-b pb-3">
           <div className="flex items-center gap-2">
@@ -37,20 +43,20 @@ export default function ReceiptModal({ transaction, onClose }) {
           </button>
         </div>
 
-        {/* Paper Receipt */}
-        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 text-xs space-y-3 font-sans shadow-inner">
+        {/* Simulasi Kertas Struk */}
+        <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 text-xs space-y-3 font-sans shadow-inner">
           <div className="text-center space-y-0.5">
             <h4 className="font-extrabold text-slate-800 text-base tracking-wide">KASIR WARUNG</h4>
             <p className="text-slate-500 text-[11px]">Jl. A Yani No. 13, Kota Langsa, Aceh</p>
-            <p className="text-slate-400 text-[10px]">02/05/26, 09:49</p>
+            <p className="text-slate-400 text-[10px]">06/08/26, 09:49</p>
           </div>
 
           <div className="flex justify-between text-slate-400 text-[11px] pt-2 border-t border-dashed border-slate-300">
             <span>ID Transaksi</span>
-            <span>INV-020526-0002</span>
+            <span>INV-060826-0002</span>
           </div>
 
-          {/* List Barang */}
+          {/* Daftar Barang Belanjaan */}
           <div className="space-y-2.5 pt-2 border-t border-dashed border-slate-300">
             {data.items.map((item, idx) => (
               <div key={idx} className="space-y-0.5">
@@ -65,29 +71,33 @@ export default function ReceiptModal({ transaction, onClose }) {
             ))}
           </div>
 
-          {/* Perhitungan Finansial */}
+          {/* Rincian Finansial Dinamis */}
           <div className="space-y-1.5 pt-2 border-t border-dashed border-slate-300">
             <div className="flex justify-between text-slate-500 font-medium">
               <span>Total Item: {data.items.reduce((s, i) => s + i.qty, 0)}</span>
             </div>
+            
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
               <span>Rp {data.total.toLocaleString()}</span>
             </div>
+
             <div className="flex justify-between text-red-500 font-medium">
               <span>Diskon</span>
               <span>-Rp {data.discount.toLocaleString()}</span>
             </div>
+
             <div className="flex justify-between font-extrabold text-slate-800 text-sm pt-1">
               <span>Total</span>
               <span>Rp {data.finalTotal.toLocaleString()}</span>
             </div>
+
             <div className="flex justify-between text-slate-600 pt-1">
               <span>Dibayar</span>
               <span>Rp {data.payAmount.toLocaleString()}</span>
             </div>
 
-            {/* BARIS UTAMA HUTANG / KEMBALI */}
+            {/* Dinamis: Tampilkan 'Hutang' Jika Uang Kurang, atau 'Kembali' Jika Pas/Lebih */}
             {data.isDebt ? (
               <div className="flex justify-between font-extrabold text-red-600 text-sm bg-red-50 p-2 rounded-xl border border-red-200 mt-1">
                 <span>Hutang</span>
@@ -106,7 +116,7 @@ export default function ReceiptModal({ transaction, onClose }) {
           </p>
         </div>
 
-        {/* Buttons */}
+        {/* Buttons Aksi */}
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={handleSendWA}
