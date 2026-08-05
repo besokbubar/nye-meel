@@ -3,40 +3,24 @@ import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode, X, Check, Camera } f
 import PaymentModal from "./PaymentModal";
 import ReceiptModal from "./ReceiptModal";
 
-export default function KasirTab() {
-  // Master Katalog Produk
-  const [catalog] = useState([
-    { id: 101, name: "Teh Kotak 300ml", price: 4500, barcode: "899432901318" },
-    { id: 102, name: "Magnum Blue", price: 11000, barcode: "899426878880" },
-    { id: 103, name: "Aqua 1.5L", price: 18000, barcode: "899043057810" },
-    { id: 104, name: "Bodrex Ekstra", price: 14000, barcode: "899080076078" },
-    { id: 105, name: "Kecap Manis ABC", price: 7500, barcode: "899214611863" },
-    { id: 106, name: "Indomie Goreng", price: 3500, barcode: "899886620011" },
-  ]);
-
-  // State Keranjang Belanja
+export default function KasirTab({ catalog = [] }) {
   const [items, setItems] = useState([
-    { id: 101, name: "Teh Kotak 300ml", price: 4500, qty: 4 },
-    { id: 102, name: "Magnum Blue", price: 11000, qty: 2 },
-    { id: 103, name: "Aqua 1.5L", price: 18000, qty: 1 },
+    { id: 1, name: "Teh Kotak 300ml", price: 4500, qty: 4 },
   ]);
 
-  // Interaktif States
   const [searchQuery, setSearchQuery] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);  // Modal untuk tombol (+)
-  const [showScanModal, setShowScanModal] = useState(false); // Modal untuk tombol Floating QR
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState(null);
   const [scanMessage, setScanMessage] = useState("");
 
-  // Filtering Katalog berdasarkan Input Search
   const filteredCatalog = catalog.filter((prod) =>
     prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    prod.barcode.includes(searchQuery)
+    (prod.barcode && prod.barcode.includes(searchQuery))
   );
 
-  // Cart Handlers
   const addToCart = (product) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
@@ -64,7 +48,6 @@ export default function KasirTab() {
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const totalCount = items.reduce((sum, item) => sum + item.qty, 0);
 
-  // Simulasi Scan Barcode Kamera
   const handleSimulatedScan = (product) => {
     addToCart(product);
     setScanMessage(`Berhasil scan: ${product.name}`);
@@ -73,7 +56,7 @@ export default function KasirTab() {
 
   return (
     <div className="space-y-4">
-      {/* 1. SEARCH BAR & TOMBOL PLUS (+) DI ATAS */}
+      {/* Search Bar & Plus (+) Button */}
       <div className="relative flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
@@ -94,7 +77,6 @@ export default function KasirTab() {
           )}
         </div>
 
-        {/* TOMBOL PLUS (+) INTERAKTIF */}
         <button
           onClick={() => setShowAddModal(true)}
           className="p-2.5 bg-[#FFC72C] text-slate-900 rounded-xl hover:bg-amber-400 active:scale-95 transition shadow-sm font-bold shrink-0"
@@ -104,7 +86,7 @@ export default function KasirTab() {
         </button>
       </div>
 
-      {/* Dynamic Search Result Dropdown */}
+      {/* Dynamic Search Dropdown */}
       {searchQuery && (
         <div className="bg-white border rounded-2xl p-3 space-y-2 shadow-lg animate-in fade-in max-h-48 overflow-y-auto">
           <p className="text-[11px] font-bold text-slate-400 uppercase">Hasil Pencarian:</p>
@@ -178,18 +160,17 @@ export default function KasirTab() {
         )}
       </div>
 
-      {/* 2. TOMBOL FLOATING BARCODE SCANNER (KANAN BAWAH) */}
+      {/* Floating QR Button */}
       <div className="fixed bottom-36 right-4 max-w-md z-10">
         <button
           onClick={() => setShowScanModal(true)}
           className="bg-[#FFC72C] text-slate-900 p-4 rounded-2xl shadow-xl hover:bg-amber-400 active:scale-95 transition-all flex items-center justify-center border-2 border-white font-bold"
-          title="Scan Barcode Kamera"
         >
           <QrCode className="w-6 h-6" />
         </button>
       </div>
 
-      {/* MODAL 1: PILIH PRODUK KE KERANJANG (DI-TRIGGER TOMBOL +) */}
+      {/* Modal Pilih Produk (+) */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom shadow-2xl">
@@ -214,9 +195,7 @@ export default function KasirTab() {
                     <p className="text-xs text-amber-700 font-extrabold mt-0.5">Rp {prod.price.toLocaleString()}</p>
                   </div>
                   <button
-                    onClick={() => {
-                      addToCart(prod);
-                    }}
+                    onClick={() => addToCart(prod)}
                     className="flex items-center gap-1 bg-[#FFC72C] text-slate-900 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-amber-400 active:scale-95 transition shadow-sm"
                   >
                     <Plus className="w-3.5 h-3.5" /> Tambah
@@ -235,7 +214,7 @@ export default function KasirTab() {
         </div>
       )}
 
-      {/* MODAL 2: SCANNER BARCODE KAMERA (DI-TRIGGER TOMBOL FLOATING QR) */}
+      {/* Modal Scanner Kamera */}
       {showScanModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in zoom-in-95">
           <div className="bg-slate-900 text-white w-full max-w-md rounded-3xl p-5 space-y-4 text-center relative border border-slate-700 shadow-2xl">
@@ -246,12 +225,9 @@ export default function KasirTab() {
               <X className="w-6 h-6" />
             </button>
 
-            <div className="space-y-1">
-              <h3 className="font-bold text-lg flex items-center justify-center gap-2">
-                <Camera className="w-5 h-5 text-[#FFC72C]" /> Scanner Barcode Kamera
-              </h3>
-              <p className="text-xs text-slate-400">Arahkan kamera atau klik item di bawah untuk simulasi scan</p>
-            </div>
+            <h3 className="font-bold text-lg flex items-center justify-center gap-2">
+              <Camera className="w-5 h-5 text-[#FFC72C]" /> Scanner Barcode Kamera
+            </h3>
 
             <div className="w-full h-44 bg-slate-950 rounded-2xl relative flex items-center justify-center border-2 border-dashed border-[#FFC72C]/50 overflow-hidden">
               <div className="w-32 h-32 border-2 border-[#FFC72C] rounded-xl animate-pulse flex items-center justify-center">
@@ -274,7 +250,7 @@ export default function KasirTab() {
                     className="p-2 bg-slate-800 hover:bg-amber-900/40 border border-slate-700 rounded-xl text-left transition"
                   >
                     <p className="text-xs font-bold text-white truncate">{prod.name}</p>
-                    <p className="text-[10px] text-[#FFC72C] font-mono">{prod.barcode}</p>
+                    <p className="text-[10px] text-[#FFC72C] font-mono">{prod.barcode || "No Barcode"}</p>
                   </button>
                 ))}
               </div>
@@ -290,7 +266,7 @@ export default function KasirTab() {
         </div>
       )}
 
-      {/* Bottom Payment Bar */}
+      {/* Bottom Bar Payment */}
       <div className="fixed bottom-16 left-0 right-0 max-w-md mx-auto p-3.5 bg-white border-t border-slate-200 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-3">
           <div className="relative p-2.5 bg-amber-100 text-slate-900 font-bold rounded-xl">
