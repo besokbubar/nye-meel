@@ -10,10 +10,20 @@ import LaporanTab from "../components/LaporanTab";
 export default function Home() {
   const [activeTab, setActiveTab] = useState("kasir");
 
+  // MASTER DATA BARANG TERPUSAT (Di-share ke Kasir & Barang Tab)
+  const [catalog, setCatalog] = useState([
+    { id: 1, name: "Teh Kotak 300ml", barcode: "899432901318", price: 4500, buyPrice: 3000, discount: 0, category: "Minuman", stock: 50, minStock: 10, sku: "190420260156" },
+    { id: 2, name: "Bodrex", barcode: "899426878880", price: 14000, buyPrice: 10000, discount: 0, category: "Obat-obatan", stock: 76, minStock: 15, sku: "190420260157" },
+    { id: 3, name: "Dunhill Mild", barcode: "899043057810", price: 4500, buyPrice: 3500, discount: 0, category: "Rokok", stock: 73, minStock: 20, sku: "190420260158" },
+    { id: 4, name: "Kecap Manis ABC v3", barcode: "899080076078", price: 7500, buyPrice: 5500, discount: 0, category: "Sembako", stock: 96, minStock: 10, sku: "190420260159" },
+    { id: 5, name: "Ceker Ayam Pedas", barcode: "", price: 10000, buyPrice: 7000, discount: 0, category: "Makanan", stock: 100, minStock: 10, sku: "190420260155" },
+    { id: 6, name: "Aqua 1.5L", barcode: "899043057811", price: 18000, buyPrice: 14000, discount: 0, category: "Minuman", stock: 42, minStock: 10, sku: "190420260161" },
+  ]);
+
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {activeTab === "kasir" && <KasirTab />}
-      {activeTab === "barang" && <BarangTab />}
+      {activeTab === "kasir" && <KasirTab catalog={catalog} />}
+      {activeTab === "barang" && <BarangTab items={catalog} setItems={setCatalog} />}
       {activeTab === "hutang" && <HutangTab />}
       {activeTab === "laporan" && <LaporanTab />}
     </Layout>
