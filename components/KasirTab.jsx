@@ -344,3 +344,11 @@ export default function KasirTab({ catalog = [] }) {
     </div>
   );
 }
+{/* Meneruskan storeInfo ke Modal Struk */}
+      {showReceipt && completedTransaction && (
+        <ReceiptModal
+          transaction={completedTransaction}
+          storeInfo={storeInfo}
+          onClose={() => setShowReceipt(false)}
+        />
+      )}
