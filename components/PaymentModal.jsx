@@ -1,109 +1,170 @@
-import React, { useState } from "react";
-import { X, Delete, Edit2, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, CheckCircle, Calculator, Wallet, CreditCard } from "lucide-react";
 
-export default function PaymentModal({ total, onClose, onSuccess }) {
-  const [discount, setDiscount] = useState(3500);
-  const [isEditingDiscount, setIsEditingDiscount] = useState(false);
-  const [tempDiscount, setTempDiscount] = useState("3500");
+export default function PaymentModal({ total = 0, items = [], onClose, onSuccess }) {
+  // Hitung total diskon bawaan dari seluruh barang yang ada di keranjang
+  const initialProductDiscount = items.reduce(
+    (sum, item) => sum + (item.discount || 0) * (item.qty || 1),
+    0
+  );
 
+  const [discountInput, setDiscountInput] = useState(
+    initialProductDiscount ? initialProductDiscount.toString() : "0"
+  );
+  const [payAmountInput, setPayAmountInput] = useState("");
+  const [customerName, setCustomerName] = useState("");
+
+  const discount = parseInt(discountInput || "0", 10);
   const finalTotal = Math.max(0, total - discount);
-  const [payAmount, setPayAmount] = useState("100000");
-  const currentPay = parseInt(payAmount || "0");
+  const payAmount = parseInt(payAmountInput || "0", 10);
 
-  const isDebt = currentPay < finalTotal;
-  const debtAmount = isDebt ? finalTotal - currentPay : 0;
-  const changeAmount = !isDebt ? currentPay - finalTotal : 0;
+  const isDebt = payAmount < finalTotal;
+  const debtAmount = isDebt ? finalTotal - payAmount : 0;
+  const changeAmount = !isDebt ? payAmount - finalTotal : 0;
 
-  const handleNumpad = (val) => {
-    if (val === "DEL") setPayAmount((prev) => (prev.length > 1 ? prev.slice(0, -1) : "0"));
-    else if (val === "000") setPayAmount((prev) => (prev === "0" ? "0" : prev + "000"));
-    else setPayAmount((prev) => (prev === "0" ? val : prev + val));
+  // Helper format rupiah dengan titik
+  const formatRupiah = (num) => {
+    return (num || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const handleQuickPay = (amount) => {
+    setPayAmountInput(amount.toString());
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!payAmountInput && payAmountInput !== 0) {
+      alert("Masukkan nominal uang yang diterima!");
+      return;
+    }
+
+    onSuccess({
+      discount,
+      finalTotal,
+      payAmount,
+      isDebt,
+      debtAmount,
+      changeAmount,
+      customerName: customerName.trim() || "Pelanggan Kasir",
+    });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 animate-in slide-in-from-bottom shadow-2xl">
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 shadow-2xl">
         <div className="flex justify-between items-center border-b pb-3">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 bg-amber-100 text-slate-900 rounded-lg text-sm">💵</span>
-            <h3 className="font-bold text-base text-slate-800">Uang Diterima</h3>
-          </div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-        </div>
-
-        <div className="bg-slate-50 p-4 rounded-2xl space-y-2 border border-slate-100 text-xs">
-          <div className="flex justify-between text-slate-500 font-medium">
-            <span>Total Tagihan</span>
-            <span className="font-bold">Rp {total.toLocaleString()}</span>
-          </div>
-
-          <div className="flex justify-between text-red-500 font-medium items-center">
-            <button onClick={() => setIsEditingDiscount(!isEditingDiscount)} className="flex items-center gap-1.5 text-red-500 font-semibold hover:underline bg-red-50 px-2 py-0.5 rounded-lg border border-red-200">
-              <span>Diskon</span>
-              <Edit2 className="w-3 h-3" />
-            </button>
-            {isEditingDiscount ? (
-              <div className="flex items-center gap-1">
-                <input type="number" value={tempDiscount} onChange={(e) => setTempDiscount(e.target.value)} className="w-20 px-2 py-0.5 text-xs border border-red-300 rounded-lg font-bold text-red-600" autoFocus />
-                <button onClick={() => { setDiscount(parseInt(tempDiscount || "0")); setIsEditingDiscount(false); }} className="p-1 bg-red-600 text-white rounded-lg"><Check className="w-3 h-3" /></button>
-              </div>
-            ) : (
-              <span>- Rp {discount.toLocaleString()}</span>
-            )}
-          </div>
-
-          <div className="flex justify-between font-extrabold text-amber-700 text-sm pt-2 border-t border-slate-200">
-            <span>Total Akhir</span>
-            <span className="text-base">Rp {finalTotal.toLocaleString()}</span>
-          </div>
-
-          <div className="flex justify-between text-slate-700 font-semibold pt-1">
-            <span>Bayar</span>
-            <span>Rp {currentPay.toLocaleString()}</span>
-          </div>
-
-          <div className="flex justify-between font-bold text-sm pt-1">
-            <span>{isDebt ? "Hutang" : "Kembali"}</span>
-            <span className={isDebt ? "text-red-600 font-bold" : "text-amber-700 font-extrabold"}>
-              Rp {(isDebt ? debtAmount : changeAmount).toLocaleString()}
+            <span className="p-2 bg-amber-100 text-slate-900 rounded-xl">
+              <Wallet className="w-5 h-5 text-amber-800" />
             </span>
+            <h3 className="font-extrabold text-base text-slate-800">Uang Diterima & Pembayaran</h3>
           </div>
-        </div>
-
-        <div className="flex justify-between items-center bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-inner">
-          <span className="text-slate-400 font-bold text-sm">Rp</span>
-          <span className="font-bold text-xl text-slate-800">{currentPay.toLocaleString()}</span>
-          <button onClick={() => setPayAmount("0")} className="text-slate-300 hover:text-slate-500 p-1"><X className="w-4 h-4" /></button>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2">
-          <button onClick={() => setPayAmount(finalTotal.toString())} className="py-2.5 bg-[#FFC72C] text-slate-900 font-extrabold rounded-xl text-xs hover:bg-amber-400 shadow-sm transition">
-            Uang Pas
-          </button>
-          {["20000", "50000", "100000"].map((nom) => (
-            <button key={nom} onClick={() => setPayAmount(nom)} className="py-2.5 border border-amber-200 bg-amber-50/60 text-slate-800 font-bold rounded-xl text-xs hover:bg-amber-100 transition">
-              Rp {parseInt(nom).toLocaleString()}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "000", "0"].map((num) => (
-            <button key={num} onClick={() => handleNumpad(num)} className="py-3 bg-slate-100 font-bold rounded-xl text-slate-800 hover:bg-slate-200 active:bg-slate-300 text-base transition">
-              {num}
-            </button>
-          ))}
-          <button onClick={() => handleNumpad("DEL")} className="py-3 bg-red-50 text-red-500 flex items-center justify-center rounded-xl hover:bg-red-100">
-            <Delete className="w-5 h-5" />
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <button onClick={onClose} className="w-1/3 py-3 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">Kembali</button>
-          <button onClick={() => onSuccess({ discount, finalTotal, payAmount: currentPay, isDebt, debtAmount, changeAmount })} className="w-2/3 py-3 bg-[#FFC72C] text-slate-900 rounded-xl text-xs font-extrabold hover:bg-amber-400 shadow-md transition">
-            Konfirmasi
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {/* Ringkasan Belanja */}
+          <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/80 space-y-1.5">
+            <div className="flex justify-between font-semibold text-slate-600">
+              <span>Subtotal Belanja</span>
+              <span>Rp {formatRupiah(total)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between font-semibold text-red-600">
+                <span>Total Diskon Produk</span>
+                <span>- Rp {formatRupiah(discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-black text-slate-900 text-base pt-1 border-t border-amber-200">
+              <span>Total Tagihan</span>
+              <span className="text-amber-700">Rp {formatRupiah(finalTotal)}</span>
+            </div>
+          </div>
+
+          {/* Input Diskon Tambahan / Produk */}
+          <div>
+            <label className="block text-slate-600 font-bold mb-1">
+              Diskon Transaksi (Nominal Rp)
+            </label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-slate-400 font-bold">Rp</span>
+              <input
+                type="number"
+                value={discountInput}
+                onChange={(e) => setDiscountInput(e.target.value)}
+                placeholder="0"
+                className="w-full border border-slate-200 rounded-xl p-3 pl-9 font-bold text-slate-800 focus:outline-[#FFC72C]"
+              />
+            </div>
+          </div>
+
+          {/* Input Nominal Uang Diterima */}
+          <div>
+            <label className="block text-slate-600 font-bold mb-1">Uang Diterima *</label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-slate-400 font-bold">Rp</span>
+              <input
+                type="number"
+                value={payAmountInput}
+                onChange={(e) => setPayAmountInput(e.target.value)}
+                placeholder="0"
+                className="w-full border-2 border-amber-300 rounded-xl p-3 pl-9 text-base font-black text-slate-900 focus:outline-[#FFC72C]"
+                autoFocus
+              />
+            </div>
+
+            {/* Tombol Cepat Nominal */}
+            <div className="grid grid-cols-4 gap-1.5 mt-2">
+              {[finalTotal, 10000, 20000, 50000, 100000].map((amt, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleQuickPay(amt)}
+                  className="py-1.5 bg-slate-100 hover:bg-amber-100 text-slate-700 font-bold rounded-lg border border-slate-200 text-[11px] truncate transition"
+                >
+                  {amt === finalTotal ? "Uang Pas" : `Rp ${formatRupiah(amt)}`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Jika Uang Kurang -> Input Nama Pelanggan untuk Catatan Hutang */}
+          {isDebt && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-2xl space-y-2 animate-in fade-in">
+              <div className="flex justify-between items-center text-red-700 font-bold">
+                <span>Status: Kurang Bayar (Hutang)</span>
+                <span>Rp {formatRupiah(debtAmount)}</span>
+              </div>
+              <div>
+                <label className="block text-slate-600 font-bold mb-1">Nama Pelanggan (Untuk Catatan Hutang)</label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Masukkan nama pelanggan..."
+                  className="w-full border border-red-300 rounded-xl p-2.5 font-bold focus:outline-red-500 bg-white"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Kembalian */}
+          {!isDebt && payAmount > 0 && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex justify-between items-center text-emerald-800 font-black text-sm">
+              <span>Uang Kembalian:</span>
+              <span className="text-base">Rp {formatRupiah(changeAmount)}</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full py-3.5 bg-[#FFC72C] text-slate-900 rounded-xl font-extrabold hover:bg-amber-400 active:scale-95 shadow-md transition text-sm flex items-center justify-center gap-2"
+          >
+            <CheckCircle className="w-5 h-5" /> Konfirmasi Pembayaran
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
