@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Layout from "../components/Layout";
+import Layout from "../layout";
 import KasirTab from "../components/KasirTab";
 import BarangTab from "../components/BarangTab";
 import HutangTab from "../components/HutangTab";
@@ -28,12 +28,12 @@ export default function Home() {
   // 4. Riwayat Transaksi Terpusat
   const [transactions, setTransactions] = useState([]);
 
-  // --- FUNGSI SINKRONISASI UTAMA KETIKA TRANSAKSI BERHASIL ---
+  // --- FUNGSI SINKRONISASI UTAMA TRANSAKSI BERHASIL ---
   const handleTransactionSuccess = (newTx) => {
-    // A. Simpan ke Riwayat Transaksi (Untuk Laporan)
+    // A. Simpan ke Riwayat Transaksi
     setTransactions((prev) => [newTx, ...prev]);
 
-    // B. Potong Stok Barang di Katalog (Untuk Menu Barang & Kasir)
+    // B. Potong Stok Barang di Katalog
     if (newTx.items && newTx.items.length > 0) {
       setCatalog((prevCatalog) =>
         prevCatalog.map((item) => {
@@ -49,7 +49,7 @@ export default function Home() {
       );
     }
 
-    // C. Jika Transaksi Merupakan HUTANG -> Otomatis Catat ke Menu Hutang
+    // C. Jika Transaksi Hutang -> Otomatis Masuk ke Menu Hutang
     if (newTx.isDebt && newTx.debtAmount > 0) {
       const customerName = newTx.customerName || "Pelanggan Kasir";
       setCustomers((prevCustomers) => {
@@ -99,7 +99,7 @@ export default function Home() {
     }
   };
 
-  // Reset Total Setelan Pabrik
+  // Reset Setelan Pabrik Total
   const handleFactoryReset = () => {
     setCatalog([]);
     setCustomers([]);
