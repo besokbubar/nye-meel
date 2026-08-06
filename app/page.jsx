@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-// MENGGUNAKAN ALIAS COMPONENT RESMI KITA (@/components/Layout)
 import Layout from "@/components/Layout";
 import KasirTab from "@/components/KasirTab";
 import BarangTab from "@/components/BarangTab";
@@ -20,21 +19,24 @@ export default function Home() {
     receiptFooter: "Terima kasih telah berbelanja!",
   });
 
-  // 2. Katalog Barang Terpusat
+  // 2. State Keranjang Terpusat (Agar tidak hilang saat pindah menu)
+  const [cartItems, setCartItems] = useState([]);
+
+  // 3. Katalog Barang Terpusat
   const [catalog, setCatalog] = useState([]);
 
-  // 3. Pelanggan & Hutang Terpusat
+  // 4. Pelanggan & Hutang Terpusat
   const [customers, setCustomers] = useState([]);
 
-  // 4. Riwayat Transaksi Terpusat
+  // 5. Riwayat Transaksi Terpusat
   const [transactions, setTransactions] = useState([]);
 
-  // --- FUNGSI SINKRONISASI UTAMA TRANSAKSI BERHASIL ---
+  // --- SINKRONISASI TRANSAKSI BERHASIL ---
   const handleTransactionSuccess = (newTx) => {
-    // A. Simpan ke Riwayat Transaksi
+    // Simpan ke Riwayat Transaksi
     setTransactions((prev) => [newTx, ...prev]);
 
-    // B. Potong Stok Barang di Katalog
+    // Potong Stok Barang di Katalog
     if (newTx.items && newTx.items.length > 0) {
       setCatalog((prevCatalog) =>
         prevCatalog.map((item) => {
@@ -50,7 +52,7 @@ export default function Home() {
       );
     }
 
-    // C. Jika Transaksi Hutang -> Otomatis Masuk ke Menu Hutang
+    // Jika Transaksi Hutang -> Otomatis Masuk ke Menu Hutang
     if (newTx.isDebt && newTx.debtAmount > 0) {
       const customerName = newTx.customerName || "Pelanggan Kasir";
       setCustomers((prevCustomers) => {
@@ -98,10 +100,14 @@ export default function Home() {
         }
       });
     }
+
+    // Kosongkan Keranjang setelah pembayaran sukses
+    setCartItems([]);
   };
 
   // Reset Setelan Pabrik Total
   const handleFactoryReset = () => {
+    setCartItems([]);
     setCatalog([]);
     setCustomers([]);
     setTransactions([]);
@@ -122,22 +128,28 @@ export default function Home() {
       setStoreInfo={setStoreInfo}
       onFactoryReset={handleFactoryReset}
     >
-      {activeTab === "kasir" && (
+      {/* Seluruh komponen dirender tetapi disembunyikan agar state internal tetap terjaga */}
+      <div className={activeTab === "kasir" ? "block" : "hidden"}>
         <KasirTab
           catalog={catalog}
           storeInfo={storeInfo}
+          items={cartItems}
+          setItems={setCartItems}
           onTransactionSuccess={handleTransactionSuccess}
         />
-      )}
-      {activeTab === "barang" && (
+      </div>
+
+      <div className={activeTab === "barang" ? "block" : "hidden"}>
         <BarangTab items={catalog} setItems={setCatalog} />
-      )}
-      {activeTab === "hutang" && (
+      </div>
+
+      <div className={activeTab === "hutang" ? "block" : "hidden"}>
         <HutangTab customers={customers} setCustomers={setCustomers} />
-      )}
-      {activeTab === "laporan" && (
+      </div>
+
+      <div className={activeTab === "laporan" ? "block" : "hidden"}>
         <LaporanTab transactions={transactions} />
-      )}
+      </div>
     </Layout>
   );
 }
