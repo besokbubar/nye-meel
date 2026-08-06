@@ -3,9 +3,7 @@ import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode, X, Check, Camera, Ch
 import PaymentModal from "./PaymentModal";
 import ReceiptModal from "./ReceiptModal";
 
-export default function KasirTab({ catalog = [], storeInfo, onTransactionSuccess }) {
-  const [items, setItems] = useState([]);
-
+export default function KasirTab({ catalog = [], storeInfo, items = [], setItems, onTransactionSuccess }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
@@ -332,14 +330,12 @@ export default function KasirTab({ catalog = [], storeInfo, onTransactionSuccess
 
             setCompletedTransaction(newTransaction);
 
-            // KIRIM KE MASTER KEUANGAN LAPORAN HARI INI
             if (onTransactionSuccess) {
               onTransactionSuccess(newTransaction);
             }
 
             setShowPayment(false);
             setShowReceipt(true);
-            setItems([]);
             triggerToast("✅ Transaksi sukses & masuk ke Laporan!");
           }}
         />
