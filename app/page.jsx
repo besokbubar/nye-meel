@@ -10,7 +10,16 @@ import LaporanTab from "../components/LaporanTab";
 export default function Home() {
   const [activeTab, setActiveTab] = useState("kasir");
 
-  // MASTER DATA BARANG TERPUSAT (Di-share ke Kasir & Barang Tab)
+  // Master Data Identitas Toko Terpusat
+  const [storeInfo, setStoreInfo] = useState({
+    name: "Nye-meel",
+    subtitle: "Bikin Nagih Terus",
+    phone: "081284135374",
+    address: "Jl. Kantil No.16 RT.003/001 Kelapa Gading Timur Jakarta Utara",
+    receiptFooter: "Terima kasih telah berbelanja!",
+  });
+
+  // Master Katalog Barang Terpusat
   const [catalog, setCatalog] = useState([
     { id: 1, name: "Teh Kotak 300ml", barcode: "899432901318", price: 4500, buyPrice: 3000, discount: 0, category: "Minuman", stock: 50, minStock: 10, sku: "190420260156" },
     { id: 2, name: "Bodrex", barcode: "899426878880", price: 14000, buyPrice: 10000, discount: 0, category: "Obat-obatan", stock: 76, minStock: 15, sku: "190420260157" },
@@ -21,8 +30,8 @@ export default function Home() {
   ]);
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {activeTab === "kasir" && <KasirTab catalog={catalog} />}
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} storeInfo={storeInfo} setStoreInfo={setStoreInfo}>
+      {activeTab === "kasir" && <KasirTab catalog={catalog} storeInfo={storeInfo} />}
       {activeTab === "barang" && <BarangTab items={catalog} setItems={setCatalog} />}
       {activeTab === "hutang" && <HutangTab />}
       {activeTab === "laporan" && <LaporanTab />}
