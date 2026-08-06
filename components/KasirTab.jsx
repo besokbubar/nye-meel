@@ -3,8 +3,7 @@ import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode, X, Check, Camera, Ch
 import PaymentModal from "./PaymentModal";
 import ReceiptModal from "./ReceiptModal";
 
-export default function KasirTab({ catalog = [], storeInfo }) {
-  // SETELAN PABRIK: Keranjang diawali kosong []
+export default function KasirTab({ catalog = [], storeInfo, onTransactionSuccess }) {
   const [items, setItems] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,10 +33,10 @@ export default function KasirTab({ catalog = [], storeInfo }) {
           i.id === product.id ? { ...i, qty: i.qty + 1 } : i
         );
       }
-      return [...prev, { id: product.id, name: product.name, price: product.price, qty: 1 }];
+      return [...prev, { id: product.id, name: product.name, price: product.price, buyPrice: product.buyPrice || 0, qty: 1 }];
     });
 
-    triggerToast(`🛒 ${product.name} berhasil ditambah ke keranjang!`);
+    triggerToast(`🛒 ${product.name} ditambah ke keranjang!`);
   };
 
   const updateQty = (id, delta) => {
@@ -50,12 +49,12 @@ export default function KasirTab({ catalog = [], storeInfo }) {
 
   const removeItem = (id, name) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    triggerToast(`🗑️ ${name || 'Item'} dihapus dari keranjang!`);
+    triggerToast(`🗑️ ${name || 'Item'} dihapus!`);
   };
 
   const handleClearCart = () => {
     setItems([]);
-    triggerToast("✨ Keranjang berhasil dikosongkan!");
+    triggerToast("✨ Keranjang dikosongkan!");
   };
 
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -69,7 +68,6 @@ export default function KasirTab({ catalog = [], storeInfo }) {
 
   return (
     <div className="space-y-4 relative">
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-[#FFC72C] px-4 py-3 rounded-2xl text-xs font-extrabold shadow-2xl flex items-center gap-2.5 border-2 border-[#FFC72C]/40 animate-in slide-in-from-top-4 backdrop-blur-md">
           <div className="w-5 h-5 bg-[#FFC72C] text-slate-900 rounded-full flex items-center justify-center font-black">
@@ -227,7 +225,7 @@ export default function KasirTab({ catalog = [], storeInfo }) {
               ))}
 
               {catalog.length === 0 && (
-                <p className="text-center text-xs text-slate-400 py-8">Belum ada daftar produk. Silakan tambah barang baru terlebih dahulu di menu <strong>Barang</strong>.</p>
+                <p className="text-center text-xs text-slate-400 py-8">Belum ada daftar produk. Tambahkan barang di menu <strong>Barang</strong>.</p>
               )}
             </div>
 
@@ -319,7 +317,9 @@ export default function KasirTab({ catalog = [], storeInfo }) {
           total={total}
           onClose={() => setShowPayment(false)}
           onSuccess={(paymentData) => {
-            setCompletedTransaction({
+            const newTransaction = {
+              id: Date.now(),
+              date: new Date(),
               items: [...items],
               total,
               discount: paymentData.discount,
@@ -328,11 +328,19 @@ export default function KasirTab({ catalog = [], storeInfo }) {
               isDebt: paymentData.isDebt,
               debtAmount: paymentData.debtAmount,
               changeAmount: paymentData.changeAmount,
-            });
+            };
+
+            setCompletedTransaction(newTransaction);
+
+            // KIRIM KE MASTER KEUANGAN LAPORAN HARI INI
+            if (onTransactionSuccess) {
+              onTransactionSuccess(newTransaction);
+            }
+
             setShowPayment(false);
             setShowReceipt(true);
             setItems([]);
-            triggerToast("✅ Transaksi berhasil diproses!");
+            triggerToast("✅ Transaksi sukses & masuk ke Laporan!");
           }}
         />
       )}
