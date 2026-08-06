@@ -24,34 +24,42 @@ export default function KasirTab({ catalog = [], storeInfo, items = [], setItems
   );
 
   const addToCart = (product) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.id === product.id ? { ...i, qty: i.qty + 1 } : i
-        );
-      }
-      return [...prev, { id: product.id, name: product.name, price: product.price, buyPrice: product.buyPrice || 0, qty: 1 }];
-    });
+    if (setItems) {
+      setItems((prev) => {
+        const existing = prev.find((i) => i.id === product.id);
+        if (existing) {
+          return prev.map((i) =>
+            i.id === product.id ? { ...i, qty: i.qty + 1 } : i
+          );
+        }
+        return [...prev, { id: product.id, name: product.name, price: product.price, buyPrice: product.buyPrice || 0, qty: 1 }];
+      });
+    }
 
     triggerToast(`🛒 ${product.name} ditambah ke keranjang!`);
   };
 
   const updateQty = (id, delta) => {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i
-      )
-    );
+    if (setItems) {
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i
+        )
+      );
+    }
   };
 
   const removeItem = (id, name) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    if (setItems) {
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    }
     triggerToast(`🗑️ ${name || 'Item'} dihapus!`);
   };
 
   const handleClearCart = () => {
-    setItems([]);
+    if (setItems) {
+      setItems([]);
+    }
     triggerToast("✨ Keranjang dikosongkan!");
   };
 
