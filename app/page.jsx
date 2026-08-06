@@ -19,7 +19,7 @@ export default function Home() {
     receiptFooter: "Terima kasih telah berbelanja!",
   });
 
-  // 2. State Keranjang Terpusat (Agar tidak hilang saat pindah menu)
+  // 2. State Keranjang Terpusat (Disimpan di Parent agar tidak hilang saat pindah menu)
   const [cartItems, setCartItems] = useState([]);
 
   // 3. Katalog Barang Terpusat
@@ -31,7 +31,7 @@ export default function Home() {
   // 5. Riwayat Transaksi Terpusat
   const [transactions, setTransactions] = useState([]);
 
-  // --- SINKRONISASI TRANSAKSI BERHASIL ---
+  // --- FUNGSI TRANSAKSI BERHASIL ---
   const handleTransactionSuccess = (newTx) => {
     // Simpan ke Riwayat Transaksi
     setTransactions((prev) => [newTx, ...prev]);
@@ -101,7 +101,7 @@ export default function Home() {
       });
     }
 
-    // Kosongkan Keranjang setelah pembayaran sukses
+    // Kosongkan Keranjang HANYA setelah pembayaran selesai
     setCartItems([]);
   };
 
@@ -128,7 +128,7 @@ export default function Home() {
       setStoreInfo={setStoreInfo}
       onFactoryReset={handleFactoryReset}
     >
-      {/* Seluruh komponen dirender tetapi disembunyikan agar state internal tetap terjaga */}
+      {/* Menggunakan kelas CSS 'hidden' agar semua komponen tetap aktif di latar belakang */}
       <div className={activeTab === "kasir" ? "block" : "hidden"}>
         <KasirTab
           catalog={catalog}
