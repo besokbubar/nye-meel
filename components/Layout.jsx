@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Store, Package, BookOpen, BarChart3, Menu, X, Settings, User, HelpCircle, LogOut, Printer, CheckCircle, Save, RotateCcw, AlertTriangle } from "lucide-react";
 
@@ -51,15 +53,15 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
         </div>
       )}
 
-      {/* Header Utama */}
+      {/* Header Utama Aplikasi */}
       <header className="flex justify-between items-center p-4 bg-white border-b sticky top-0 z-20">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-[#FFC72C] rounded-xl text-slate-900 font-bold shadow-sm">
             <Store className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-bold text-base text-slate-800 leading-none">{storeInfo.name}</h1>
-            <p className="text-[10px] text-slate-400 mt-0.5">{storeInfo.subtitle}</p>
+            <h1 className="font-bold text-base text-slate-800 leading-none">{storeInfo?.name || "Kasir Warung"}</h1>
+            <p className="text-[10px] text-slate-400 mt-0.5">{storeInfo?.subtitle || "Toko Saya"}</p>
           </div>
         </div>
         <button
@@ -72,7 +74,7 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
 
       <main className="p-4">{children}</main>
 
-      {/* Sidebar Pengaturan */}
+      {/* Drawer Menu Sidebar */}
       {showMenu && (
         <div className="fixed inset-0 bg-black/60 z-50 flex justify-end backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-4/5 max-w-xs h-full p-5 space-y-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right">
@@ -80,10 +82,10 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
               <div className="flex justify-between items-center border-b pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#FFC72C] text-slate-900 font-extrabold rounded-2xl flex items-center justify-center shadow-sm">
-                    {storeInfo.name.charAt(0)}
+                    {storeInfo?.name ? storeInfo.name.charAt(0) : "K"}
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-slate-800">{storeInfo.name}</h3>
+                    <h3 className="font-bold text-sm text-slate-800">{storeInfo?.name || "Kasir Warung"}</h3>
                     <p className="text-[11px] text-slate-400">v1.2.0 (Pro)</p>
                   </div>
                 </div>
@@ -126,7 +128,6 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
               </div>
             </div>
 
-            {/* Tombol Reset Setelan Pabrik & Keluar */}
             <div className="border-t pt-4 space-y-2">
               <button
                 onClick={() => {
@@ -161,7 +162,7 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
                 <label className="block text-slate-600 font-bold mb-1">Nama Toko *</label>
                 <input
                   type="text"
-                  value={tempStoreForm.name}
+                  value={tempStoreForm.name || ""}
                   onChange={(e) => setTempStoreForm({ ...tempStoreForm, name: e.target.value })}
                   className="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:outline-[#FFC72C]"
                 />
@@ -171,7 +172,7 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
                 <label className="block text-slate-600 font-bold mb-1">Slogan / Cabang</label>
                 <input
                   type="text"
-                  value={tempStoreForm.subtitle}
+                  value={tempStoreForm.subtitle || ""}
                   onChange={(e) => setTempStoreForm({ ...tempStoreForm, subtitle: e.target.value })}
                   className="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:outline-[#FFC72C]"
                 />
@@ -181,7 +182,7 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
                 <label className="block text-slate-600 font-bold mb-1">No. WhatsApp Toko</label>
                 <input
                   type="text"
-                  value={tempStoreForm.phone}
+                  value={tempStoreForm.phone || ""}
                   onChange={(e) => setTempStoreForm({ ...tempStoreForm, phone: e.target.value })}
                   className="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:outline-[#FFC72C]"
                 />
@@ -190,7 +191,7 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
               <div>
                 <label className="block text-slate-600 font-bold mb-1">Alamat Lengkap</label>
                 <textarea
-                  value={tempStoreForm.address}
+                  value={tempStoreForm.address || ""}
                   onChange={(e) => setTempStoreForm({ ...tempStoreForm, address: e.target.value })}
                   rows={2}
                   className="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:outline-[#FFC72C]"
@@ -253,7 +254,7 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
         </div>
       )}
 
-      {/* Modal Reset Pabrik */}
+      {/* Modal Reset Setelan Pabrik */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl animate-in zoom-in-95">
@@ -290,7 +291,7 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
         </div>
       )}
 
-      {/* Bottom Nav */}
+      {/* Bottom Nav Bar */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t flex justify-around py-2 px-1 z-20">
         {tabs.map((tab) => {
           const Icon = tab.icon;
