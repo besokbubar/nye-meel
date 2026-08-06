@@ -3,10 +3,9 @@ import { Plus, Minus, Trash2, Search, ShoppingCart, QrCode, X, Check, Camera, Ch
 import PaymentModal from "./PaymentModal";
 import ReceiptModal from "./ReceiptModal";
 
-export default function KasirTab({ catalog = [] }) {
-  const [items, setItems] = useState([
-    { id: 1, name: "Teh Kotak 300ml", price: 4500, qty: 4 },
-  ]);
+export default function KasirTab({ catalog = [], storeInfo }) {
+  // SETELAN PABRIK: Keranjang diawali kosong []
+  const [items, setItems] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -15,8 +14,6 @@ export default function KasirTab({ catalog = [] }) {
   const [showReceipt, setShowReceipt] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState(null);
   const [scanMessage, setScanMessage] = useState("");
-
-  // STATE UNTUK TOAST NOTIFICATION KEKINIAN
   const [toastMessage, setToastMessage] = useState("");
 
   const triggerToast = (msg) => {
@@ -29,7 +26,6 @@ export default function KasirTab({ catalog = [] }) {
     (prod.barcode && prod.barcode.includes(searchQuery))
   );
 
-  // TAMBAH KE KERANJANG LENGKAP DENGAN TOAST POPUP
   const addToCart = (product) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
@@ -41,7 +37,6 @@ export default function KasirTab({ catalog = [] }) {
       return [...prev, { id: product.id, name: product.name, price: product.price, qty: 1 }];
     });
 
-    // Panggil Toast Notifikasi Kekinian
     triggerToast(`🛒 ${product.name} berhasil ditambah ke keranjang!`);
   };
 
@@ -74,9 +69,9 @@ export default function KasirTab({ catalog = [] }) {
 
   return (
     <div className="space-y-4 relative">
-      {/* TOAST NOTIFICATION KEKINIAN (WARNA KUNING #FFC72C & SLATE-900) */}
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-[#FFC72C] px-4 py-3 rounded-2xl text-xs font-extrabold shadow-2xl flex items-center gap-2.5 border-2 border-[#FFC72C]/40 animate-in slide-in-from-top-4 fade-in backdrop-blur-md">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-[#FFC72C] px-4 py-3 rounded-2xl text-xs font-extrabold shadow-2xl flex items-center gap-2.5 border-2 border-[#FFC72C]/40 animate-in slide-in-from-top-4 backdrop-blur-md">
           <div className="w-5 h-5 bg-[#FFC72C] text-slate-900 rounded-full flex items-center justify-center font-black">
             <CheckCircle2 className="w-3.5 h-3.5" />
           </div>
@@ -230,6 +225,10 @@ export default function KasirTab({ catalog = [] }) {
                   </button>
                 </div>
               ))}
+
+              {catalog.length === 0 && (
+                <p className="text-center text-xs text-slate-400 py-8">Belum ada daftar produk. Silakan tambah barang baru terlebih dahulu di menu <strong>Barang</strong>.</p>
+              )}
             </div>
 
             <button
@@ -339,16 +338,8 @@ export default function KasirTab({ catalog = [] }) {
       )}
 
       {showReceipt && completedTransaction && (
-        <ReceiptModal transaction={completedTransaction} onClose={() => setShowReceipt(false)} />
+        <ReceiptModal transaction={completedTransaction} storeInfo={storeInfo} onClose={() => setShowReceipt(false)} />
       )}
     </div>
   );
 }
-{/* Meneruskan storeInfo ke Modal Struk */}
-      {showReceipt && completedTransaction && (
-        <ReceiptModal
-          transaction={completedTransaction}
-          storeInfo={storeInfo}
-          onClose={() => setShowReceipt(false)}
-        />
-      )}
