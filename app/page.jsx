@@ -10,7 +10,7 @@ import LaporanTab from "../components/LaporanTab";
 export default function Home() {
   const [activeTab, setActiveTab] = useState("kasir");
 
-  // Master Data Identitas Toko (Default Awal Toko Baru)
+  // SETELAN PABRIK: Identitas Toko & Katalog
   const [storeInfo, setStoreInfo] = useState({
     name: "Kasir Warung",
     subtitle: "Toko Baru Saya",
@@ -19,10 +19,8 @@ export default function Home() {
     receiptFooter: "Terima kasih telah berbelanja!",
   });
 
-  // KATALOG BARANG BERSIH (SETELAN PABRIK / KOSONG)
   const [catalog, setCatalog] = useState([]);
 
-  // Fungsi Reset Pabrik Total
   const handleFactoryReset = () => {
     setCatalog([]);
     setStoreInfo({
