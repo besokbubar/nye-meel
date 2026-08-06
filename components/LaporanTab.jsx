@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Download, TrendingUp, ShoppingBag, Wallet, CheckCircle, CreditCard, DollarSign } from "lucide-react";
 
-export default function LaporanTab() {
+export default function LaporanTab({ transactions = [] }) {
   const [period, setPeriod] = useState("Hari Ini");
   const [toastMessage, setToastMessage] = useState("");
 
@@ -10,14 +10,76 @@ export default function LaporanTab() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // LAPORAN KOSONG / KASIR BELUM ADA TRANSAKSI (SETELAN PABRIK)
-  const reportData = {
-    "Hari Ini": { sales: 0, transactions: 0, itemsSold: 0, grossProfit: 0, moneyIn: 0, debt: 0, cash: 0, qris: 0, ratioMoneyIn: 0, ratioDebt: 0 },
-    "7 Hari": { sales: 0, transactions: 0, itemsSold: 0, grossProfit: 0, moneyIn: 0, debt: 0, cash: 0, qris: 0, ratioMoneyIn: 0, ratioDebt: 0 },
-    "Bulan Ini": { sales: 0, transactions: 0, itemsSold: 0, grossProfit: 0, moneyIn: 0, debt: 0, cash: 0, qris: 0, ratioMoneyIn: 0, ratioDebt: 0 },
+  // LOGIKA HITUNG LAPORAN REAL-TIME DARI TRANSAKSI
+  const calculateReport = () => {
+    const now = new Date();
+
+    const filteredTx = transactions.filter((tx) => {
+      const txDate = new Date(tx.date);
+      if (period === "Hari Ini") {
+        return txDate.toDateString() === now.toDateString();
+      }
+      if (period === "7 Hari") {
+        const diffTime = Math.abs(now - txDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 7;
+      }
+      if (period === "Bulan Ini") {
+        return (
+          txDate.getMonth() === now.getMonth() &&
+          txDate.getFullYear() === now.getFullYear()
+        );
+      }
+      return true;
+    });
+
+    let sales = 0;
+    let itemsSold = 0;
+    let grossProfit = 0;
+    let moneyIn = 0;
+    let debt = 0;
+    let cash = 0;
+    let qris = 0;
+
+    filteredTx.forEach((tx) => {
+      sales += tx.finalTotal || 0;
+      debt += tx.debtAmount || 0;
+
+      const receivedMoney = tx.isDebt
+        ? Math.max(0, tx.payAmount)
+        : tx.finalTotal;
+
+      moneyIn += receivedMoney;
+      cash += receivedMoney; // Default cash
+
+      if (tx.items) {
+        tx.items.forEach((item) => {
+          itemsSold += item.qty || 0;
+          const buy = item.buyPrice || 0;
+          grossProfit += ((item.price || 0) - buy) * (item.qty || 0);
+        });
+      }
+    });
+
+    const totalMoneyDebt = moneyIn + debt;
+    const ratioMoneyIn = totalMoneyDebt > 0 ? Math.round((moneyIn / totalMoneyDebt) * 100) : 0;
+    const ratioDebt = totalMoneyDebt > 0 ? Math.round((debt / totalMoneyDebt) * 100) : 0;
+
+    return {
+      sales,
+      transactions: filteredTx.length,
+      itemsSold,
+      grossProfit: Math.max(0, grossProfit),
+      moneyIn,
+      debt,
+      cash,
+      qris,
+      ratioMoneyIn,
+      ratioDebt,
+    };
   };
 
-  const currentData = reportData[period] || reportData["Hari Ini"];
+  const currentData = calculateReport();
 
   const handleExportPDF = () => {
     window.print();
@@ -40,7 +102,7 @@ export default function LaporanTab() {
             key={p}
             onClick={() => {
               setPeriod(p);
-              showNotification(`Periode: ${p}`);
+              showNotification(`Periode Laporan: ${p}`);
             }}
             className={`py-2 text-xs font-extrabold rounded-xl transition-all ${
               period === p
@@ -55,7 +117,7 @@ export default function LaporanTab() {
 
       {/* Title & Ekspor Button */}
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-slate-700 text-base">Ringkasan Keuangan</h2>
+        <h2 className="font-bold text-slate-700 text-base">Ringkasan Keuangan ({period})</h2>
         <button
           onClick={handleExportPDF}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFC72C] text-slate-900 border border-amber-300 rounded-xl text-xs font-extrabold hover:bg-amber-400 active:scale-95 transition shadow-sm"
@@ -116,8 +178,8 @@ export default function LaporanTab() {
         <h3 className="font-bold text-slate-800 text-sm">Uang Masuk vs Hutang</h3>
         
         <div className="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden flex border border-slate-200">
-          <div className="bg-[#FFC72C] h-full" style={{ width: `0%` }}></div>
-          <div className="bg-amber-600 h-full" style={{ width: `0%` }}></div>
+          <div className="bg-[#FFC72C] h-full transition-all duration-500" style={{ width: `${currentData.ratioMoneyIn}%` }}></div>
+          <div className="bg-amber-600 h-full transition-all duration-500" style={{ width: `${currentData.ratioDebt}%` }}></div>
         </div>
 
         <div className="flex justify-between items-center text-xs">
@@ -126,7 +188,7 @@ export default function LaporanTab() {
               <span className="w-2.5 h-2.5 rounded-full bg-[#FFC72C]"></span>
               <span>Uang Masuk</span>
             </div>
-            <p className="font-extrabold text-slate-800 text-sm mt-0.5">Rp 0</p>
+            <p className="font-extrabold text-slate-800 text-sm mt-0.5">Rp {currentData.moneyIn.toLocaleString()}</p>
           </div>
 
           <div className="text-right">
@@ -134,7 +196,9 @@ export default function LaporanTab() {
               <span className="w-2.5 h-2.5 rounded-full bg-amber-600"></span>
               <span>Hutang</span>
             </div>
-            <p className="font-extrabold text-red-600 text-sm mt-0.5">Rp 0</p>
+            <p className="font-extrabold text-red-600 text-sm mt-0.5">
+              {currentData.debt > 0 ? `-Rp ${currentData.debt.toLocaleString()}` : "Rp 0"}
+            </p>
           </div>
         </div>
       </div>
@@ -148,7 +212,7 @@ export default function LaporanTab() {
             <div className="p-2 bg-amber-100 text-amber-900 rounded-lg"><DollarSign className="w-4 h-4 text-amber-800" /></div>
             <span className="font-semibold text-slate-700">Tunai</span>
           </div>
-          <span className="font-extrabold text-slate-800">Rp 0</span>
+          <span className="font-extrabold text-slate-800">Rp {currentData.cash.toLocaleString()}</span>
         </div>
 
         <div className="flex justify-between items-center text-xs">
@@ -156,7 +220,7 @@ export default function LaporanTab() {
             <div className="p-2 bg-amber-100 text-amber-900 rounded-lg"><CreditCard className="w-4 h-4 text-amber-800" /></div>
             <span className="font-semibold text-slate-700">QRIS / Non-Tunai</span>
           </div>
-          <span className="font-extrabold text-slate-800">Rp 0</span>
+          <span className="font-extrabold text-slate-800">Rp {currentData.qris.toLocaleString()}</span>
         </div>
       </div>
     </div>
