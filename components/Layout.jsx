@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Store, Package, BookOpen, BarChart3, Menu, X, Settings, User, HelpCircle, LogOut, Printer, CheckCircle, Save, RotateCcw, AlertTriangle } from "lucide-react";
 
-export default function Layout({ children, activeTab, setActiveTab, storeInfo, setStoreInfo, onFactoryReset }) {
+export default function Layout({ children, activeTab, setActiveTab, storeInfo, setStoreInfo, onFactoryReset, onLogout }) {
   const [showMenu, setShowMenu] = useState(false);
 
   const [printerSettings, setPrinterSettings] = useState({
@@ -128,7 +128,18 @@ export default function Layout({ children, activeTab, setActiveTab, storeInfo, s
               </div>
             </div>
 
+            {/* Tombol Keluar Sesi & Setelan Pabrik */}
             <div className="border-t pt-4 space-y-2">
+              <button
+                onClick={() => {
+                  if (onLogout) onLogout();
+                  setShowMenu(false);
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition border border-red-100"
+              >
+                <LogOut className="w-4 h-4" /> Keluar Sesi (Kunci)
+              </button>
+
               <button
                 onClick={() => {
                   setShowResetConfirm(true);
