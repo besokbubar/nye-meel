@@ -1,10 +1,29 @@
 import React from "react";
 import { CheckCircle2, X, Share2, Printer } from "lucide-react";
 
-export default function ReceiptModal({ transaction, onClose }) {
+export default function ReceiptModal({ transaction, onClose, storeInfo }) {
   if (!transaction) return null;
 
+  // Mengambil Data Identitas Toko secara Dinamis
+  const info = storeInfo || {
+    name: "Nye-meel",
+    subtitle: "Bikin Nagih Terus",
+    phone: "081284135374",
+    address: "Jl. Kantil No.16 RT.003/001 Kelapa Gading Timur Jakarta Utara",
+    receiptFooter: "Terima kasih telah berbelanja!",
+  };
+
   const { items = [], total = 0, discount = 0, finalTotal = 0, payAmount = 0, isDebt = false, debtAmount = 0, changeAmount = 0 } = transaction;
+
+  const handleSendWA = () => {
+    const statusText = isDebt
+      ? `Hutang: Rp ${debtAmount.toLocaleString()}`
+      : `Kembali: Rp ${changeAmount.toLocaleString()}`;
+
+    const text = `*${info.name.toUpperCase()}*\n${info.address}\nTelp/WA: ${info.phone}\n--------------------------\nSubtotal: Rp ${total.toLocaleString()}\nDiskon: -Rp ${discount.toLocaleString()}\nTotal Akhir: Rp ${finalTotal.toLocaleString()}\nDibayar: Rp ${payAmount.toLocaleString()}\n${statusText}\n\n${info.receiptFooter}`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
@@ -17,10 +36,12 @@ export default function ReceiptModal({ transaction, onClose }) {
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
         </div>
 
+        {/* Simulasi Kertas Struk Mengikuti Data Toko Dinamis */}
         <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 text-xs space-y-3 font-sans shadow-inner">
           <div className="text-center space-y-0.5">
-            <h4 className="font-extrabold text-slate-800 text-base tracking-wide">KASIR WARUNG</h4>
-            <p className="text-slate-500 text-[11px]">Jl. A Yani No. 13, Kota Langsa, Aceh</p>
+            <h4 className="font-extrabold text-slate-800 text-base tracking-wide uppercase">{info.name}</h4>
+            <p className="text-slate-500 text-[11px] px-2">{info.address}</p>
+            <p className="text-slate-400 text-[10px]">No. WA: {info.phone}</p>
             <p className="text-slate-400 text-[10px]">06/08/26, 09:49</p>
           </div>
 
@@ -61,11 +82,11 @@ export default function ReceiptModal({ transaction, onClose }) {
             )}
           </div>
 
-          <p className="text-center text-slate-400 text-[11px] pt-3 font-medium">Terima kasih telah berbelanja!</p>
+          <p className="text-center text-slate-400 text-[11px] pt-3 font-medium">{info.receiptFooter}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => window.open(`https://wa.me/`, "_blank")} className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-100">
+          <button onClick={handleSendWA} className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-100">
             <Share2 className="w-4 h-4" /> Kirim WA
           </button>
           <button onClick={() => window.print()} className="flex items-center justify-center gap-2 py-2.5 bg-amber-50 text-slate-800 border border-amber-200 rounded-xl text-xs font-bold hover:bg-amber-100">
